@@ -36,7 +36,8 @@ def load_image(name, colorkey=None):
 DICT_IMAGES = {
     'ground_ender': load_image(r'ground\ender_block.png'),
     'enemy_red': load_image(r'enemy_red.png'),
-    'stone_block': load_image(r'stone_block.png')
+    'stone_block': load_image(r'stone_block.png'),
+    'cat': load_image('cat.png')
 }
 
 
@@ -148,10 +149,10 @@ class GroundTexture(pygame.sprite.Sprite):
 
 
 class Cube(pygame.sprite.Sprite):
-    def __init__(self, width, height, x, y, color, *groups: AbstractGroup):
+    def __init__(self, width, height, x, y, color=None, *groups: AbstractGroup):
         super().__init__(*groups)
-        self.image = load_image('box.png')
-        self.rect = pygame.Rect(x, y, width, height)
+        self.image = load_image('box.png') if color is None else DICT_IMAGES['stone_block']
+        self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
         self.speed_x = 0
@@ -192,15 +193,16 @@ def main_action():
 
     hero = HeroMain(x=200, y=600
                     , frames=hero_main_frames)
-    cube_new = Cube(width=50, height=50,  x=500, y=300, color='blue')
-    cube_new2 = Cube(width=50, height=50,  x=100, y=340, color='blue')
-    cube_new3 = Cube(width=50, height=50,  x=900, y=100, color='blue')
+    cube_new = Cube(width=50, height=50,  x=500, y=300)
+    cube_new2 = Cube(width=50, height=50,  x=100, y=340)
+    cube_new3 = Cube(width=50, height=50,  x=900, y=100)
     cube_red = Cube(width=50, height=50, x=700, y=400, color='red')
 
     for i in range(5):
         enemy = Enemy(100 * random.randint(1, 10), 100 * random.randint(1, 6), DICT_IMAGES['enemy_red'])
         enemy_sprites.add(enemy)
 
+    enemy_sprites.add(Enemy(1000, 500, DICT_IMAGES['cat']))
     sprites.add(hero, cube_red, cube_new, cube_new2, cube_new3)
     sprites_.add(cube_new, cube_new2, cube_new3)
     sprites_godmode.add(cube_red)
