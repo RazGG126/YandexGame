@@ -12,6 +12,7 @@ SCREEN.fill(pygame.Color('black'))
 CLOCK = pygame.time.Clock()
 FPS = 30
 hero_main_frames = []
+ground_sprites = pygame.sprite.Group()
 
 
 def load_image(name, colorkey=None):
@@ -30,8 +31,13 @@ def load_image(name, colorkey=None):
     return image
 
 
-class CubeMain(pygame.sprite.Sprite):
-    def __init__(self, width, height, x, y, color, frames, *groups: AbstractGroup):
+DICT_IMAGES = {
+    'ground_ender': load_image(r'ground\ender_block.png')
+}
+
+
+class HeroMain(pygame.sprite.Sprite):
+    def __init__(self, x, y, frames, *groups: AbstractGroup):
         super().__init__(*groups)
         self.frames = frames
         self.cur_frame = 0
@@ -128,10 +134,24 @@ class Cube(pygame.sprite.Sprite):
         self.rect.y += move_y
 
 
+class GroundTexture(pygame.sprite.Sprite):
+    def __init__(self, tile_type, pos_x, pos_y):
+        super().__init__(ground_sprites)
+        self.image = DICT_IMAGES[tile_type]
+        self.width = 86
+        self.height = 86
+        self.rect = self.image.get_rect().move(
+            self.width * pos_x, self.height * pos_y)
+
+
 def init_frames():
     global hero_main_frames
     for i in range(1, 7):
         hero_main_frames.append(load_image(rf'walk\{i}.png'))
+
+    for y in range((HEIGHT // 86) + 1):
+        for x in range((WIDTH // 86) + 1):
+            GroundTexture('ground_ender', x, y)
 
 
 def main_action():
@@ -143,14 +163,14 @@ def main_action():
     sprites_godmode = pygame.sprite.Group()
     sprites_ = pygame.sprite.Group()
 
-    cube = CubeMain(width=50, height=50,  x=200, y=600, color='green', frames=hero_main_frames)
+    hero = HeroMain(x=200, y=600
+                    , frames=hero_main_frames)
     cube_new = Cube(width=50, height=50,  x=500, y=300, color='blue')
     cube_new2 = Cube(width=50, height=50,  x=100, y=340, color='blue')
     cube_new3 = Cube(width=50, height=50,  x=900, y=100, color='blue')
     cube_red = Cube(width=50, height=50, x=700, y=400, color='red')
 
-    sprites.add(cube_red)
-    sprites.add(cube, cube_red, cube_new, cube_new2, cube_new3)
+    sprites.add(hero, cube_red, cube_new, cube_new2, cube_new3)
     sprites_.add(cube_new, cube_new2, cube_new3)
     sprites_godmode.add(cube_red)
     while running:
@@ -162,24 +182,25 @@ def main_action():
         keys = pygame.key.get_pressed()
 
         if keys[pygame.K_LEFT]:
-            cube.moving = True
-            cube.moving_left = True
-            cube.moving_right = False
-            cube.move_x -= cube.speed_x
+            hero.moving = True
+            hero.moving_left = True
+            hero.moving_right = False
+            hero.move_x -= hero.speed_x
         if keys[pygame.K_RIGHT]:
-            cube.moving = True
-            cube.moving_left = False
-            cube.moving_right = True
-            cube.move_x += cube.speed_x
+            hero.moving = True
+            hero.moving_left = False
+            hero.moving_right = True
+            hero.move_x += hero.speed_x
         if keys[pygame.K_UP]:
-            cube.moving = True
-            cube.move_y -= cube.speed_y
+            hero.moving = True
+            hero.move_y -= hero.speed_y
         if keys[pygame.K_DOWN]:
-            cube.moving = True
-            cube.move_y += cube.speed_y
+            hero.moving = True
+            hero.move_y += hero.speed_y
 
+        ground_sprites.draw(SCREEN)
         sprites.draw(SCREEN)
-        sprites.update(cube, cube_red, sprites_)
+        sprites.update(hero, cube_red, sprites_)
         CLOCK.tick(FPS)
         pygame.display.flip()
     pygame.quit()
