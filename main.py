@@ -58,7 +58,10 @@ class HeroMain(pygame.sprite.Sprite):
 
     def update_frame(self, stand=False):
         if stand:
-            self.cur_frame = 0
+            if self.moving_left:
+                self.image = pygame.transform.flip(self.frames[self.cur_frame // 4], True, False)
+            elif self.moving_right:
+                self.image = self.frames[self.cur_frame // 4]
         else:
             self.cur_frame += 1
             if self.cur_frame > 19:
