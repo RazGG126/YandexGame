@@ -8,7 +8,7 @@ WIDTH = 1280
 HEIGHT = 720
 SIZE = WIDTH, HEIGHT
 SCREEN = pygame.display.set_mode(SIZE)
-SCREEN.fill(pygame.Color('white'))
+SCREEN.fill(pygame.Color('black'))
 CLOCK = pygame.time.Clock()
 FPS = 30
 hero_main_frames = []
@@ -45,15 +45,22 @@ class CubeMain(pygame.sprite.Sprite):
         self.heavy = 0
 
         self.moving = False
-
+        self.moving_left = False
+        self.moving_right = True
         self.move_x = 0
         self.move_y = 0
 
-    def update_frame(self):
-        self.cur_frame += 1
-        if self.cur_frame > 29:
+    def update_frame(self, stand=False):
+        if stand:
             self.cur_frame = 0
-        self.image = self.frames[self.cur_frame // 5]
+        else:
+            self.cur_frame += 1
+            if self.cur_frame > 19:
+                self.cur_frame = 0
+        if self.moving_left:
+            self.image = pygame.transform.flip(self.frames[self.cur_frame // 4], True, False)
+        elif self.moving_right:
+            self.image = self.frames[self.cur_frame // 4]
 
     def update(self, cube, cube_2, sprites):
         self.rect.x += self.move_x
@@ -89,8 +96,12 @@ class CubeMain(pygame.sprite.Sprite):
             self.rect.y += self.move_y
         if self.moving:
             self.update_frame()
+        else:
+            self.update_frame(True)
+
         self.move_x = 0
         self.move_y = 0
+
         cube.moving = False
 
 
@@ -143,7 +154,7 @@ def main_action():
     sprites_.add(cube_new, cube_new2, cube_new3)
     sprites_godmode.add(cube_red)
     while running:
-        SCREEN.fill(pygame.Color('white'))
+        SCREEN.fill(pygame.Color('black'))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -152,9 +163,13 @@ def main_action():
 
         if keys[pygame.K_LEFT]:
             cube.moving = True
+            cube.moving_left = True
+            cube.moving_right = False
             cube.move_x -= cube.speed_x
         if keys[pygame.K_RIGHT]:
             cube.moving = True
+            cube.moving_left = False
+            cube.moving_right = True
             cube.move_x += cube.speed_x
         if keys[pygame.K_UP]:
             cube.moving = True
