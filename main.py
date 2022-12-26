@@ -1,6 +1,7 @@
 import os
 import sys
 import pygame
+import random
 from pygame.sprite import AbstractGroup
 
 pygame.init()
@@ -13,6 +14,7 @@ CLOCK = pygame.time.Clock()
 FPS = 30
 hero_main_frames = []
 ground_sprites = pygame.sprite.Group()
+enemy_sprites = pygame.sprite.Group()
 
 
 def load_image(name, colorkey=None):
@@ -32,7 +34,9 @@ def load_image(name, colorkey=None):
 
 
 DICT_IMAGES = {
-    'ground_ender': load_image(r'ground\ender_block.png')
+    'ground_ender': load_image(r'ground\ender_block.png'),
+    'enemy_red': load_image(r'enemy_red.png'),
+    'stone_block': load_image(r'stone_block.png')
 }
 
 
@@ -71,7 +75,7 @@ class HeroMain(pygame.sprite.Sprite):
         elif self.moving_right:
             self.image = self.frames[self.cur_frame // 4]
 
-    def update(self, cube, cube_2, sprites):
+    def update(self, cube, cube_2, sprites, enemy_sprites):
         self.rect.x += self.move_x
         self.rect.y += self.move_y
         if pygame.sprite.spritecollideany(self, sprites):
@@ -87,7 +91,7 @@ class HeroMain(pygame.sprite.Sprite):
                 self.rect.x -= self.move_x
                 self.rect.x += self.heavy
                 cube_2.move(self.heavy, 0)
-                if not cube_2.can_move(sprites):
+                if not cube_2.can_move(sprites, enemy_sprites):
                     cube_2.move(-self.heavy, 0)
                     self.rect.x -= self.heavy
 
@@ -97,7 +101,7 @@ class HeroMain(pygame.sprite.Sprite):
                 self.rect.y -= self.move_y
                 self.rect.y += self.heavy
                 cube_2.move(0, self.heavy)
-                if not cube_2.can_move(sprites):
+                if not cube_2.can_move(sprites, enemy_sprites):
                     cube_2.move(0, -self.heavy)
                     self.rect.y -= self.heavy
         else:
@@ -114,6 +118,35 @@ class HeroMain(pygame.sprite.Sprite):
         cube.moving = False
 
 
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self, x, y, frames, *groups: AbstractGroup):
+        super().__init__(*groups)
+        self.frames = [frames]
+        self.cur_frame = 0
+        self.image = self.frames[self.cur_frame]
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.speed_x = 5
+        self.speed_y = 5
+
+        self.moving = False
+        self.moving_left = False
+        self.moving_right = True
+        self.move_x = 0
+        self.move_y = 0
+
+
+class GroundTexture(pygame.sprite.Sprite):
+    def __init__(self, tile_type, pos_x, pos_y):
+        super().__init__(ground_sprites)
+        self.image = DICT_IMAGES[tile_type]
+        self.width = 86
+        self.height = 86
+        self.rect = self.image.get_rect().move(
+            self.width * pos_x, self.height * pos_y)
+
+
 class Cube(pygame.sprite.Sprite):
     def __init__(self, width, height, x, y, color, *groups: AbstractGroup):
         super().__init__(*groups)
@@ -127,24 +160,15 @@ class Cube(pygame.sprite.Sprite):
         self.move_x = 0
         self.move_y = 0
 
-    def can_move(self, sprites):
-        if pygame.sprite.spritecollideany(self, sprites):
-            return False
+    def can_move(self, *sprite_args):
+        for sprite_lst in sprite_args:
+            if pygame.sprite.spritecollideany(self, sprite_lst):
+                return False
         return True
 
     def move(self, move_x, move_y):
         self.rect.x += move_x
         self.rect.y += move_y
-
-
-class GroundTexture(pygame.sprite.Sprite):
-    def __init__(self, tile_type, pos_x, pos_y):
-        super().__init__(ground_sprites)
-        self.image = DICT_IMAGES[tile_type]
-        self.width = 86
-        self.height = 86
-        self.rect = self.image.get_rect().move(
-            self.width * pos_x, self.height * pos_y)
 
 
 def init_frames():
@@ -172,6 +196,10 @@ def main_action():
     cube_new2 = Cube(width=50, height=50,  x=100, y=340, color='blue')
     cube_new3 = Cube(width=50, height=50,  x=900, y=100, color='blue')
     cube_red = Cube(width=50, height=50, x=700, y=400, color='red')
+
+    for i in range(5):
+        enemy = Enemy(100 * random.randint(1, 10), 100 * random.randint(1, 6), DICT_IMAGES['enemy_red'])
+        enemy_sprites.add(enemy)
 
     sprites.add(hero, cube_red, cube_new, cube_new2, cube_new3)
     sprites_.add(cube_new, cube_new2, cube_new3)
@@ -202,8 +230,9 @@ def main_action():
             hero.move_y += hero.speed_y
 
         ground_sprites.draw(SCREEN)
+        enemy_sprites.draw(SCREEN)
         sprites.draw(SCREEN)
-        sprites.update(hero, cube_red, sprites_)
+        sprites.update(hero, cube_red, sprites_, enemy_sprites)
         CLOCK.tick(FPS)
         pygame.display.flip()
     pygame.quit()
