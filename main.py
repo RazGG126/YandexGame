@@ -37,7 +37,7 @@ DICT_IMAGES = {
     'ground_ender': load_image(r'ground\ender_block.png'),
     'enemy_red': load_image(r'enemy_red.png'),
     'stone_block': load_image(r'stone_block.png'),
-    'cat': load_image('cat.png')
+    'cat': [load_image('cat.png'), load_image('cat_2.png'), load_image('cat.png'), load_image('cat_3.png')]
 }
 
 
@@ -120,10 +120,11 @@ class HeroMain(pygame.sprite.Sprite):
 
 
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self, x, y, frames, *groups: AbstractGroup):
+    def __init__(self, x, y, frames, cat=False, *groups: AbstractGroup):
         super().__init__(*groups)
-        self.frames = [frames]
+        self.frames = [frames] if not cat else frames
         self.cur_frame = 0
+        self.cat = cat
         self.image = self.frames[self.cur_frame]
         self.rect = self.image.get_rect()
         self.rect.x = x
@@ -136,6 +137,25 @@ class Enemy(pygame.sprite.Sprite):
         self.moving_right = True
         self.move_x = 0
         self.move_y = 0
+
+    def update_frame(self, stand=False):
+        if self.cat:
+            if stand:
+                if self.moving_left:
+                    self.image = pygame.transform.flip(self.frames[self.cur_frame // 4], True, False)
+                elif self.moving_right:
+                    self.image = self.frames[self.cur_frame // 4]
+            else:
+                self.cur_frame += 1
+                if self.cur_frame > 15:
+                    self.cur_frame = 0
+            if self.moving_left:
+                self.image = pygame.transform.flip(self.frames[self.cur_frame // 4], True, False)
+            elif self.moving_right:
+                self.image = self.frames[self.cur_frame // 4]
+
+    def update(self):
+        self.update_frame()
 
 
 class GroundTexture(pygame.sprite.Sprite):
@@ -202,7 +222,8 @@ def main_action():
         enemy = Enemy(100 * random.randint(1, 10), 100 * random.randint(1, 6), DICT_IMAGES['enemy_red'])
         enemy_sprites.add(enemy)
 
-    enemy_sprites.add(Enemy(1000, 500, DICT_IMAGES['cat']))
+    enemy_sprites.add(Enemy(1000, 500, DICT_IMAGES['cat'], cat=True))
+
     sprites.add(hero, cube_red, cube_new, cube_new2, cube_new3)
     sprites_.add(cube_new, cube_new2, cube_new3)
     sprites_godmode.add(cube_red)
@@ -233,6 +254,7 @@ def main_action():
 
         ground_sprites.draw(SCREEN)
         enemy_sprites.draw(SCREEN)
+        enemy_sprites.update()
         sprites.draw(SCREEN)
         sprites.update(hero, cube_red, sprites_, enemy_sprites)
         CLOCK.tick(FPS)
