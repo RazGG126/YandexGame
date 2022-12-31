@@ -50,8 +50,6 @@ class Gun(pygame.sprite.Sprite):
         self.gun_image = gun_image
         self.image = load_image(gun_image)
         self.rect = self.image.get_rect()
-        self.rect.x = 0
-        self.rect.y = 0
 
 
 class HeroMain(pygame.sprite.Sprite):
@@ -101,27 +99,29 @@ class HeroMain(pygame.sprite.Sprite):
         if self.moving_left:
             self.gun.image = pygame.transform.flip(self.gun_image, True, False)
             self.gun.image = pygame.transform.rotate(self.gun.image, -90)
-            if -120 <= self.angle - 10 <= -90:
-                self.gun.image = pygame.transform.rotate(self.gun.image, 360 - (self.angle - 10 + 90))
-                print(self.angle - 10)
+            if self.angle <= -80:
+                self.gun.image = pygame.transform.rotate(self.gun.image, 360 - (self.angle + 90))
                 SCREEN.blit(self.gun.image, (self.rect.x - 20,
-                                             (self.rect.y + self.image.get_size()[1] // 2)))
+                                             (self.rect.y + self.image.get_size()[1] // 2  - (90 + (self.angle + 90)) // 4)))
+            elif 90 <= self.angle <=180:
+                self.gun.image = pygame.transform.rotate(self.gun.image, 360 - (self.angle + 90))
+                SCREEN.blit(self.gun.image, ((self.rect.x - 20) - 1 * (self.angle - 180) // 4 ,
+                                             (self.rect.y + self.image.get_size()[1] // 2 + 1 * (self.angle - 180) // 4)))
             else:
-                print(self.angle)
                 self.gun.image = pygame.transform.flip(self.gun_image, True, False)
-                SCREEN.blit(self.gun.image, (self.rect.x - 20, self.rect.y + self.image.get_size()[1] // 2))
+                SCREEN.blit(self.gun.image, (self.rect.x -  20,
+                                             (self.rect.y + self.image.get_size()[1] // 2)))
+
         elif self.moving_right:
             self.gun.image = self.gun_image
             self.gun.image = pygame.transform.rotate(self.gun.image, 360 - self.angle)
             if -55 <= self.angle < 0:
                 SCREEN.blit(self.gun.image, (self.rect.x,
                                              (self.rect.y + self.image.get_size()[1] // 2) + self.angle // 2))
-            elif -90 <= self.angle < -55:
+            elif -100 <= self.angle < -55:
                 SCREEN.blit(self.gun.image, (self.rect.x - self.angle // 9,
                                              (self.rect.y + self.image.get_size()[1] // 2) + self.angle // 2))
-                print(self.angle)
-            elif 0 < self.angle < 90:
-                # self.gun.image = pygame.transform.rotate(self.gun.image, -self.angle)
+            elif 0 < self.angle < 100:
                 SCREEN.blit(self.gun.image, (self.rect.x,
                                              (self.rect.y + self.image.get_size()[1] // 2) - self.angle // 4))
             else:
@@ -304,8 +304,10 @@ def main_action():
                 running = False
             if event.type == pygame.MOUSEMOTION:
                 mousePos['x'], mousePos['y'] = pygame.mouse.get_pos()
-                angleR = math.atan2(mousePos['y'] - hero.rect.y,
-                                    mousePos['x'] - hero.rect.x)
+                x = hero.rect.x + hero.image.get_rect()[2] // 2
+                y = hero.rect.y + hero.image.get_rect()[3] // 2
+                angleR = math.atan2(mousePos['y'] - y,
+                                    mousePos['x'] - x)
                 angleD = angleR * 180 / math.pi
                 hero.angle = angleD
 
