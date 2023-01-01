@@ -7,8 +7,8 @@ import math
 from pygame.sprite import AbstractGroup
 
 pygame.init()
-WIDTH = 1280
-HEIGHT = 720
+WIDTH = 1000
+HEIGHT = 500
 SIZE = WIDTH, HEIGHT
 SCREEN = pygame.display.set_mode(SIZE)
 SCREEN.fill(pygame.Color('black'))
@@ -17,6 +17,7 @@ FPS = 30
 hero_main_frames = []
 ground_sprites = pygame.sprite.Group()
 enemy_sprites = pygame.sprite.Group()
+all_sprites = pygame.sprite.Group()
 mousePos = {'x': 0, 'y': 0}
 
 
@@ -54,7 +55,7 @@ class Gun(pygame.sprite.Sprite):
 
 class HeroMain(pygame.sprite.Sprite):
     def __init__(self, x, y, gun, frames, *groups: AbstractGroup):
-        super().__init__(*groups)
+        super().__init__(all_sprites, *groups)
         self.frames = frames
         self.cur_frame = 0
         self.image = self.frames[self.cur_frame]
@@ -185,7 +186,7 @@ class HeroMain(pygame.sprite.Sprite):
 
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, x, y, gun, frames, cat=False, hero=None, *groups: AbstractGroup):
-        super().__init__(*groups)
+        super().__init__(all_sprites, *groups)
         self.frames = [frames] if not cat else frames
         self.cur_frame = 0
         self.cat = cat
@@ -199,6 +200,7 @@ class Enemy(pygame.sprite.Sprite):
         self.hero = hero
 
         self.angle = 0
+        self.strike_distance = 350
 
         self.moving = False
         self.moving_left = False
@@ -242,7 +244,7 @@ class Enemy(pygame.sprite.Sprite):
         x = self.rect.x + self.image.get_rect()[2] // 2
         y = self.rect.y + self.image.get_rect()[3] // 2
 
-        if ((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5 < 350:
+        if ((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5 < self.strike_distance + 50:
             if (x_hero - x) < 0:
                 self.moving_left = True
                 self.moving_right = False
@@ -251,7 +253,7 @@ class Enemy(pygame.sprite.Sprite):
                 self.moving_right = True
 
         if self.moving_left:
-            if ((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5 < 250:
+            if ((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5 < self.strike_distance:
                 angleR = math.atan2(y_hero - y,
                                     x_hero - x)
                 self.angle = angleR * 180 / math.pi
@@ -274,7 +276,7 @@ class Enemy(pygame.sprite.Sprite):
             #                                  (self.rect.y + self.image.get_size()[1] // 2)))
 
         elif self.moving_right:
-            if ((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5 < 250:
+            if ((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5 < self.strike_distance:
                 angleR = math.atan2(y_hero - y,
                                     x_hero - x)
                 self.angle = angleR * 180 / math.pi
@@ -298,7 +300,7 @@ class Enemy(pygame.sprite.Sprite):
 
 class GroundTexture(pygame.sprite.Sprite):
     def __init__(self, tile_type, pos_x, pos_y):
-        super().__init__(ground_sprites)
+        super().__init__(ground_sprites, all_sprites)
         self.image = DICT_IMAGES[tile_type]
         self.width = 86
         self.height = 86
@@ -308,7 +310,7 @@ class GroundTexture(pygame.sprite.Sprite):
 
 class Cube(pygame.sprite.Sprite):
     def __init__(self, width, height, x, y, color=None, *groups: AbstractGroup):
-        super().__init__(*groups)
+        super().__init__(all_sprites, *groups)
         self.image = load_image('box.png') if color is None else DICT_IMAGES['stone_block']
         self.rect = self.image.get_rect()
         self.mask = pygame.mask.from_surface(self.image)
@@ -331,13 +333,30 @@ class Cube(pygame.sprite.Sprite):
         self.rect.y += move_y
 
 
+class Camera:
+    # зададим начальный сдвиг камеры
+    def __init__(self):
+        self.dx = 0
+        self.dy = 0
+
+    # сдвинуть объект obj на смещение камеры
+    def apply(self, obj):
+        obj.rect.x += self.dx
+        obj.rect.y += self.dy
+
+    # позиционировать камеру на объекте target
+    def update(self, target):
+        self.dx = -(target.rect.x + target.rect.w // 2 - WIDTH // 2)
+        self.dy = -(target.rect.y + target.rect.h // 2 - HEIGHT // 2)
+
+
 def init_frames():
     global hero_main_frames
     for i in range(1, 7):
         hero_main_frames.append(load_image(rf'walk\{i}.png'))
 
-    for y in range((HEIGHT // 86) + 1):
-        for x in range((WIDTH // 86) + 1):
+    for y in range((2000 // 86) + 1):
+        for x in range((2000 // 86) + 1):
             GroundTexture('ground_ender', x, y)
 
 
@@ -345,6 +364,8 @@ def main_action():
     running = True
 
     init_frames()
+
+    camera = Camera()
 
     sprites = pygame.sprite.Group()
     sprites_ = pygame.sprite.Group()
@@ -398,9 +419,12 @@ def main_action():
                                 y
                             ]
                         )
-
+        #camera
+        camera.update(hero)
+        for sprite in all_sprites:
+            camera.apply(sprite)
+        #
         keys = pygame.key.get_pressed()
-
         if keys[pygame.K_LEFT]:
             hero.moving = True
             hero.moving_left = True
@@ -442,7 +466,7 @@ def main_action():
             sprite.rect.x = elem[1]
             sprite.rect.y = elem[2]
 
-            if (x_ ** 2 + y_ ** 2) ** 0.5 > 400:
+            if (x_ ** 2 + y_ ** 2) ** 0.5 > 320:
                 firesList.remove(elem)
             elif elem[1] < 0 or elem[1] > WIDTH or elem[2] < 0 or elem[2] > HEIGHT:
                 firesList.remove(elem)
