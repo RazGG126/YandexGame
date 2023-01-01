@@ -184,7 +184,7 @@ class HeroMain(pygame.sprite.Sprite):
 
 
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self, x, y, gun, frames, cat=False, *groups: AbstractGroup):
+    def __init__(self, x, y, gun, frames, cat=False, hero=None, *groups: AbstractGroup):
         super().__init__(*groups)
         self.frames = [frames] if not cat else frames
         self.cur_frame = 0
@@ -195,6 +195,10 @@ class Enemy(pygame.sprite.Sprite):
         self.rect.y = y
         self.speed_x = 5
         self.speed_y = 5
+
+        self.hero = hero
+
+        self.angle = 0
 
         self.moving = False
         self.moving_left = False
@@ -220,20 +224,76 @@ class Enemy(pygame.sprite.Sprite):
                 self.image = pygame.transform.flip(self.frames[self.cur_frame // 4], True, False)
             elif self.moving_right:
                 self.image = self.frames[self.cur_frame // 4]
+        else:
+            if not stand:
+                if self.moving_left:
+                    self.image = pygame.transform.flip(self.frames[self.cur_frame // 4], True, False)
+                elif self.moving_right:
+                    self.image = self.frames[self.cur_frame // 4]
 
     def update(self):
         self.move_gun()
         self.update_frame()
 
     def move_gun(self):
+
+        x_hero = self.hero.rect.x + self.hero.image.get_rect()[2] // 2
+        y_hero = self.hero.rect.y + self.hero.image.get_rect()[3] // 2
+        x = self.rect.x + self.image.get_rect()[2] // 2
+        y = self.rect.y + self.image.get_rect()[3] // 2
+
+        if ((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5 < 350:
+            if (x_hero - x) < 0:
+                self.moving_left = True
+                self.moving_right = False
+            else:
+                self.moving_left = False
+                self.moving_right = True
+
         if self.moving_left:
-            self.gun.image = pygame.transform.flip(self.gun_image, True, False)
-            SCREEN.blit(self.gun.image, (self.rect.x - 20, self.rect.y + self.image.get_size()[1] // 2))
-            # self.gun.rect.x = self.rect.x - 20
-            # self.gun.rect.y = self.rect.y + self.image.get_size()[1] // 2
+            if ((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5 < 250:
+                angleR = math.atan2(y_hero - y,
+                                    x_hero - x)
+                self.angle = angleR * 180 / math.pi
+
+                self.gun.image = pygame.transform.flip(self.gun_image, True, False)
+                self.gun.image = pygame.transform.rotate(self.gun.image, -90)
+                if self.angle <= -80:
+                    self.gun.image = pygame.transform.rotate(self.gun.image, 360 - (self.angle + 90))
+                    SCREEN.blit(self.gun.image, (self.rect.x - 20,
+                                                 (self.rect.y + self.image.get_size()[1] // 2 - (
+                                                             90 + (self.angle + 90)) // 4)))
+                elif 90 <= self.angle <= 180:
+                    self.gun.image = pygame.transform.rotate(self.gun.image, 360 - (self.angle + 90))
+                    SCREEN.blit(self.gun.image, ((self.rect.x - 20) - 1 * (self.angle - 180) // 4,
+                                                 (self.rect.y + self.image.get_size()[1] // 2 + 1 * (
+                                                             self.angle - 180) // 4)))
+            # else:
+            #     self.gun.image = pygame.transform.flip(self.gun_image, True, False)
+            #     SCREEN.blit(self.gun.image, (self.rect.x,
+            #                                  (self.rect.y + self.image.get_size()[1] // 2)))
+
         elif self.moving_right:
-            self.gun.image = self.gun_image
-            SCREEN.blit(self.gun.image, (self.rect.x, self.rect.y + self.image.get_size()[1] // 2))
+            if ((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5 < 250:
+                angleR = math.atan2(y_hero - y,
+                                    x_hero - x)
+                self.angle = angleR * 180 / math.pi
+
+                self.gun.image = self.gun_image
+                self.gun.image = pygame.transform.rotate(self.gun.image, 360 - self.angle)
+                if -55 <= self.angle < 0:
+                    SCREEN.blit(self.gun.image, (self.rect.x,
+                                                 (self.rect.y + self.image.get_size()[1] // 2) + self.angle // 2))
+                elif -100 <= self.angle < -55:
+                    SCREEN.blit(self.gun.image, (self.rect.x - self.angle // 9,
+                                                 (self.rect.y + self.image.get_size()[1] // 2) + self.angle // 2))
+                elif 0 < self.angle < 100:
+                    SCREEN.blit(self.gun.image, (self.rect.x,
+                                                 (self.rect.y + self.image.get_size()[1] // 2) - self.angle // 4))
+            # else:
+            #     self.gun.image = self.gun_image
+            #     SCREEN.blit(self.gun.image, (self.rect.x,
+            #                                  (self.rect.y + self.image.get_size()[1] // 2)))
 
 
 class GroundTexture(pygame.sprite.Sprite):
@@ -301,10 +361,10 @@ def main_action():
     cube_red = Cube(width=50, height=50, x=700, y=400, color='red')
 
     for i in range(5):
-        enemy = Enemy(100 * random.randint(1, 10), 100 * random.randint(1, 6),gun=ak47, frames=DICT_IMAGES['enemy_red'])
+        enemy = Enemy(100 * random.randint(1, 10), 100 * random.randint(1, 6),gun=ak47, frames=DICT_IMAGES['enemy_red'], hero=hero)
         enemy_sprites.add(enemy)
 
-    enemy_sprites.add(Enemy(1000, 500, gun=ak47, frames=DICT_IMAGES['cat'], cat=True))
+    enemy_sprites.add(Enemy(1000, 500, gun=ak47, frames=DICT_IMAGES['cat'], cat=True, hero=hero))
 
     sprites.add(hero, cube_red, cube_new, cube_new2, cube_new3)
     sprites_.add(cube_new, cube_new2, cube_new3)
