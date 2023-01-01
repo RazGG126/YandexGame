@@ -75,6 +75,7 @@ class HeroMain(pygame.sprite.Sprite):
 
         self.gun = gun #class
         self.gun_image = gun.image
+        self.strike_can = True
 
     # def rotate(self):
     #     self.image = pygame.transform.rotate(self.image, 360 - self.angle)
@@ -100,14 +101,17 @@ class HeroMain(pygame.sprite.Sprite):
             self.gun.image = pygame.transform.flip(self.gun_image, True, False)
             self.gun.image = pygame.transform.rotate(self.gun.image, -90)
             if self.angle <= -80:
+                self.strike_can = True
                 self.gun.image = pygame.transform.rotate(self.gun.image, 360 - (self.angle + 90))
                 SCREEN.blit(self.gun.image, (self.rect.x - 20,
                                              (self.rect.y + self.image.get_size()[1] // 2  - (90 + (self.angle + 90)) // 4)))
-            elif 90 <= self.angle <=180:
+            elif 90 <= self.angle <= 180:
+                self.strike_can = True
                 self.gun.image = pygame.transform.rotate(self.gun.image, 360 - (self.angle + 90))
                 SCREEN.blit(self.gun.image, ((self.rect.x - 20) - 1 * (self.angle - 180) // 4 ,
                                              (self.rect.y + self.image.get_size()[1] // 2 + 1 * (self.angle - 180) // 4)))
             else:
+                self.strike_can = False
                 self.gun.image = pygame.transform.flip(self.gun_image, True, False)
                 SCREEN.blit(self.gun.image, (self.rect.x -  20,
                                              (self.rect.y + self.image.get_size()[1] // 2)))
@@ -116,15 +120,19 @@ class HeroMain(pygame.sprite.Sprite):
             self.gun.image = self.gun_image
             self.gun.image = pygame.transform.rotate(self.gun.image, 360 - self.angle)
             if -55 <= self.angle < 0:
+                self.strike_can = True
                 SCREEN.blit(self.gun.image, (self.rect.x,
                                              (self.rect.y + self.image.get_size()[1] // 2) + self.angle // 2))
             elif -100 <= self.angle < -55:
+                self.strike_can = True
                 SCREEN.blit(self.gun.image, (self.rect.x - self.angle // 9,
                                              (self.rect.y + self.image.get_size()[1] // 2) + self.angle // 2))
             elif 0 < self.angle < 100:
+                self.strike_can = True
                 SCREEN.blit(self.gun.image, (self.rect.x,
                                              (self.rect.y + self.image.get_size()[1] // 2) - self.angle // 4))
             else:
+                self.strike_can = False
                 self.gun.image = self.gun_image
                 SCREEN.blit(self.gun.image, (self.rect.x,
                                          (self.rect.y + self.image.get_size()[1] // 2)))
@@ -243,6 +251,7 @@ class Cube(pygame.sprite.Sprite):
         super().__init__(*groups)
         self.image = load_image('box.png') if color is None else DICT_IMAGES['stone_block']
         self.rect = self.image.get_rect()
+        self.mask = pygame.mask.from_surface(self.image)
         self.rect.x = x
         self.rect.y = y
         self.speed_x = 0
@@ -280,6 +289,8 @@ def main_action():
     sprites = pygame.sprite.Group()
     sprites_ = pygame.sprite.Group()
 
+    firesList = []
+
     ak47 = Gun('gun.png')
 
     hero = HeroMain(x=200, y=600, gun=ak47, frames=hero_main_frames)
@@ -308,8 +319,25 @@ def main_action():
                 y = hero.rect.y + hero.image.get_rect()[3] // 2
                 angleR = math.atan2(mousePos['y'] - y,
                                     mousePos['x'] - x)
-                angleD = angleR * 180 / math.pi
-                hero.angle = angleD
+                hero.angle = angleR * 180 / math.pi
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if hero.gun is not None:
+
+                    mousePos['x'], mousePos['y'] = pygame.mouse.get_pos()
+                    x = hero.rect.x + hero.image.get_rect()[2] // 2
+                    y = hero.rect.y + hero.image.get_rect()[3] // 2
+                    angleR = math.atan2(mousePos['y'] - y,
+                                        mousePos['x'] - x)
+                    if hero.strike_can:
+                        firesList.append(
+                            [
+                                angleR,
+                                x - 10,
+                                y,
+                                x,
+                                y
+                            ]
+                        )
 
         keys = pygame.key.get_pressed()
 
@@ -335,6 +363,37 @@ def main_action():
         sprites.draw(SCREEN)
         sprites.update(hero, cube_red, sprites_, enemy_sprites)
         enemy_sprites.update()
+        for elem in firesList:
+            sX = math.cos(elem[0]) * 30
+            sY = math.sin(elem[0]) * 30
+
+            elem[1] += sX
+            elem[2] += sY
+
+            x_ = elem[1] - elem[3]
+            y_ = elem[2] - elem[4]
+
+            sprite = pygame.sprite.Sprite()
+
+            image = pygame.Surface((2 * 5, 2 * 5),
+                                    pygame.SRCALPHA, 32)
+            sprite.image = image
+            sprite.rect = sprite.image.get_rect()
+            sprite.rect.x = elem[1]
+            sprite.rect.y = elem[2]
+
+            if (x_ ** 2 + y_ ** 2) ** 0.5 > 400:
+                firesList.remove(elem)
+            elif elem[1] < 0 or elem[1] > WIDTH or elem[2] < 0 or elem[2] > HEIGHT:
+                firesList.remove(elem)
+            elif pygame.sprite.spritecollideany(sprite, sprites_) or pygame.sprite.collide_rect(sprite, cube_red):
+                firesList.remove(elem)
+            else:
+                pygame.draw.circle(image, pygame.Color("orange"),
+                               (5, 5), 5)
+                SCREEN.blit(image, [elem[1], elem[2]])
+
+        # print(firesList)
         CLOCK.tick(FPS)
         pygame.display.flip()
     pygame.quit()
