@@ -18,6 +18,8 @@ hero_main_frames = []
 ground_sprites = pygame.sprite.Group()
 enemy_sprites = pygame.sprite.Group()
 all_sprites = pygame.sprite.Group()
+vertical_borders = pygame.sprite.Group()
+horizontal_borders = pygame.sprite.Group()
 mousePos = {'x': 0, 'y': 0}
 
 
@@ -144,43 +146,48 @@ class HeroMain(pygame.sprite.Sprite):
         self.move_gun()
         self.rect.x += self.move_x
         self.rect.y += self.move_y
-        if pygame.sprite.spritecollideany(self, sprites):
+
+        if (not pygame.sprite.spritecollideany(self, horizontal_borders)) and (not pygame.sprite.spritecollideany(self, vertical_borders)):
             self.rect.x -= self.move_x
             self.rect.y -= self.move_y
-        self.rect.x -= self.move_x
-        self.rect.y -= self.move_y
-
-        if not pygame.sprite.collide_rect(cube, cube_2):
             self.rect.x += self.move_x
-            if pygame.sprite.collide_rect(cube, cube_2):
-                self.heavy = 1 if self.move_x >= 0 else -1
+            self.rect.y += self.move_y
+            if pygame.sprite.spritecollideany(self, sprites):
                 self.rect.x -= self.move_x
-                self.rect.x += self.heavy
-                cube_2.move(self.heavy, 0)
-                if not cube_2.can_move(sprites, enemy_sprites):
-                    cube_2.move(-self.heavy, 0)
-                    self.rect.x -= self.heavy
-
-            self.rect.y += self.move_y
-            if pygame.sprite.collide_rect(cube, cube_2):
-                self.heavy = 1 if self.move_y >= 0 else -1
                 self.rect.y -= self.move_y
-                self.rect.y += self.heavy
-                cube_2.move(0, self.heavy)
-                if not cube_2.can_move(sprites, enemy_sprites):
-                    cube_2.move(0, -self.heavy)
-                    self.rect.y -= self.heavy
+            self.rect.x -= self.move_x
+            self.rect.y -= self.move_y
+            if not pygame.sprite.collide_rect(cube, cube_2):
+                self.rect.x += self.move_x
+                if pygame.sprite.collide_rect(cube, cube_2):
+                    self.heavy = 1 if self.move_x >= 0 else -1
+                    self.rect.x -= self.move_x
+                    self.rect.x += self.heavy
+                    cube_2.move(self.heavy, 0)
+                    if not cube_2.can_move(sprites, enemy_sprites):
+                        cube_2.move(-self.heavy, 0)
+                        self.rect.x -= self.heavy
+                self.rect.y += self.move_y
+                if pygame.sprite.collide_rect(cube, cube_2):
+                    self.heavy = 1 if self.move_y >= 0 else -1
+                    self.rect.y -= self.move_y
+                    self.rect.y += self.heavy
+                    cube_2.move(0, self.heavy)
+                    if not cube_2.can_move(sprites, enemy_sprites):
+                        cube_2.move(0, -self.heavy)
+                        self.rect.y -= self.heavy
+            else:
+                self.rect.x += self.move_x
+                self.rect.y += self.move_y
         else:
-            self.rect.x += self.move_x
-            self.rect.y += self.move_y
+            self.rect.x -= self.move_x
+            self.rect.y -= self.move_y
         if self.moving:
             self.update_frame()
         else:
             self.update_frame(True)
-
         self.move_x = 0
         self.move_y = 0
-
         cube.moving = False
 
 
@@ -333,6 +340,20 @@ class Cube(pygame.sprite.Sprite):
         self.rect.y += move_y
 
 
+class Border(pygame.sprite.Sprite):
+    # строго вертикальный или строго горизонтальный отрезок
+    def __init__(self, x1, y1, x2, y2):
+        super().__init__(all_sprites)
+        if x1 == x2:  # вертикальная стенка
+            self.add(vertical_borders)
+            self.image = pygame.Surface([1, y2 - y1])
+            self.rect = pygame.Rect(x1 - 30, y1, 30, y2 - y1)
+        else:  # горизонтальная стенка
+            self.add(horizontal_borders)
+            self.image = pygame.Surface([x2 - x1, 1])
+            self.rect = pygame.Rect(x1, y1, x2 - x1, 1)
+
+
 class Camera:
     # зададим начальный сдвиг камеры
     def __init__(self):
@@ -364,6 +385,11 @@ def main_action():
     running = True
 
     init_frames()
+
+    Border(2, 2, 2000 - 2, 2)
+    Border(2, 2000 - 2, 2000 - 2, 2000 - 2)
+    Border(2, 2, 2, 2000 - 2)
+    Border(2000 - 2, 2, 2000 - 2, 2000 - 2)
 
     camera = Camera()
 
@@ -468,7 +494,7 @@ def main_action():
 
             if (x_ ** 2 + y_ ** 2) ** 0.5 > 320:
                 firesList.remove(elem)
-            elif elem[1] < 0 or elem[1] > WIDTH or elem[2] < 0 or elem[2] > HEIGHT:
+            elif pygame.sprite.spritecollideany(sprite, horizontal_borders) or pygame.sprite.spritecollideany(sprite, vertical_borders):
                 firesList.remove(elem)
             elif pygame.sprite.spritecollideany(sprite, sprites_) or pygame.sprite.collide_rect(sprite, cube_red):
                 firesList.remove(elem)
