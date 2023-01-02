@@ -66,8 +66,8 @@ class HeroMain(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
-        self.speed_x = 10
-        self.speed_y = 10
+        self.speed_x = 5
+        self.speed_y = 5
 
         self.angle = 0
         self.heavy = 0
@@ -245,11 +245,11 @@ class Enemy(pygame.sprite.Sprite):
                 elif self.moving_right:
                     self.image = self.frames[self.cur_frame // 4]
 
-    def update(self):
-        self.move_gun()
+    def update(self, camera):
+        self.move_gun(camera)
         self.update_frame()
 
-    def move_gun(self):
+    def move_gun(self, camera):
 
         x_hero = self.hero.rect.x + self.hero.image.get_rect()[2] // 2
         y_hero = self.hero.rect.y + self.hero.image.get_rect()[3] // 2
@@ -265,7 +265,11 @@ class Enemy(pygame.sprite.Sprite):
                 self.moving_right = True
 
         if self.moving_left:
+            repeat = True
             if ((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5 < self.strike_distance:
+                if (((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5) < (self.strike_distance - 100):
+                    self.fire(x, y, x_hero, y_hero, camera, True)
+                    repeat = False #отрисовка пуль без повторов
                 angleR = math.atan2(y_hero - y,
                                     x_hero - x)
                 self.angle = angleR * 180 / math.pi
@@ -282,14 +286,21 @@ class Enemy(pygame.sprite.Sprite):
                     SCREEN.blit(self.gun.image, ((self.rect.x - 20) - 1 * (self.angle - 180) // 4,
                                                  (self.rect.y + self.image.get_size()[1] // 2 + 1 * (
                                                              self.angle - 180) // 4)))
-
+                if repeat:
+                    self.fire(x, y, x_hero, y_hero, camera)
+            else:
+                self.fire(x, y, x_hero, y_hero, camera)
             # else:
             #     self.gun.image = pygame.transform.flip(self.gun_image, True, False)
             #     SCREEN.blit(self.gun.image, (self.rect.x,
             #                                  (self.rect.y + self.image.get_size()[1] // 2)))
 
         elif self.moving_right:
+            repeat= True
             if ((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5 < self.strike_distance:
+                if (((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5) < (self.strike_distance - 100):
+                    self.fire(x, y, x_hero, y_hero, camera, True)
+                    repeat = False #отрисовка пуль без повторов
                 angleR = math.atan2(y_hero - y,
                                     x_hero - x)
                 self.angle = angleR * 180 / math.pi
@@ -305,17 +316,18 @@ class Enemy(pygame.sprite.Sprite):
                 elif 0 < self.angle < 100:
                     SCREEN.blit(self.gun.image, (self.rect.x,
                                                  (self.rect.y + self.image.get_size()[1] // 2) - self.angle // 4))
-                self.fire(x, y, x_hero, y_hero, True)
+                if repeat:
+                    self.fire(x, y, x_hero, y_hero, camera)
             else:
-                self.fire(x, y, x_hero, y_hero)
+                self.fire(x, y, x_hero, y_hero, camera)
             # els
             #     self.gun.image = self.gun_image
             #     SCREEN.blit(self.gun.image, (self.rect.x,
             #                                  (self.rect.y + self.image.get_size()[1] // 2)))
-    def fire(self,x, y, x_2, y_2, status=False):
+    def fire(self,x, y, x_2, y_2, camera, status=False):
         if status:
             self.count += 1
-            if self.count % 15 == 0:
+            if self.count % 5 == 0:
                 self.count = 0
                 self.fires_list.append(
                                 [
@@ -328,13 +340,21 @@ class Enemy(pygame.sprite.Sprite):
                                 ]
                             )
         for x, elem in enumerate(self.fires_list):
-            sX = math.cos(elem[0]) * 5
-            sY = math.sin(elem[0]) * 5
-
-            print(x,'pul', elem[0])
+            sX = math.cos(elem[0]) * 20
+            sY = math.sin(elem[0]) * 20
 
             elem[1] += sX
             elem[2] += sY
+
+            dl_x, dl_y = camera.apply(pref='p', x=elem[1], y=elem[2])
+
+            elem[1] = dl_x
+            elem[2] = dl_y
+
+            dl_x, dl_y = camera.apply(pref='p', x=elem[3], y=elem[4])
+
+            elem[3] = dl_x
+            elem[4] = dl_y
 
             x_ = elem[1] - elem[3]
             y_ = elem[2] - elem[4]
@@ -430,9 +450,13 @@ class Camera:
         self.dy = 0
 
     # сдвинуть объект obj на смещение камеры
-    def apply(self, obj):
-        obj.rect.x += self.dx
-        obj.rect.y += self.dy
+    def apply(self, obj=None, pref=None, x=0, y=0):
+        if pref is None:
+            obj.rect.x += self.dx
+            obj.rect.y += self.dy
+        else:
+            return x  + self.dx, y + self.dy
+
 
     # позиционировать камеру на объекте target
     def update(self, target):
@@ -537,13 +561,23 @@ def main_action():
         enemy_sprites.draw(SCREEN)
         sprites.draw(SCREEN)
         sprites.update(hero, cube_red, sprites_, enemy_sprites)
-        enemy_sprites.update()
+        enemy_sprites.update(camera)
         for elem in firesList:
             sX = math.cos(elem[0]) * 30
             sY = math.sin(elem[0]) * 30
 
             elem[1] += sX
             elem[2] += sY
+
+            dl_x, dl_y = camera.apply(pref='p', x=elem[1], y=elem[2])
+
+            elem[1] = dl_x
+            elem[2] = dl_y
+
+            dl_x, dl_y = camera.apply(pref='p', x=elem[3], y=elem[4])
+
+            elem[3] = dl_x
+            elem[4] = dl_y
 
             x_ = elem[1] - elem[3]
             y_ = elem[2] - elem[4]
@@ -559,6 +593,8 @@ def main_action():
 
             if (x_ ** 2 + y_ ** 2) ** 0.5 > 320:
                 firesList.remove(elem)
+            elif pygame.sprite.spritecollideany(sprite, enemy_sprites):
+                print('Enemi')
             elif pygame.sprite.spritecollideany(sprite, horizontal_borders) or pygame.sprite.spritecollideany(sprite, vertical_borders):
                 firesList.remove(elem)
             elif pygame.sprite.spritecollideany(sprite, sprites_) or pygame.sprite.collide_rect(sprite, cube_red):
