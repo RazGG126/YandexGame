@@ -20,6 +20,8 @@ enemy_sprites = pygame.sprite.Group()
 all_sprites = pygame.sprite.Group()
 vertical_borders = pygame.sprite.Group()
 horizontal_borders = pygame.sprite.Group()
+sprites = pygame.sprite.Group()
+sprites_ = pygame.sprite.Group()
 mousePos = {'x': 0, 'y': 0}
 
 
@@ -64,8 +66,8 @@ class HeroMain(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
-        self.speed_x = 5
-        self.speed_y = 5
+        self.speed_x = 10
+        self.speed_y = 10
 
         self.angle = 0
         self.heavy = 0
@@ -218,6 +220,9 @@ class Enemy(pygame.sprite.Sprite):
         self.gun = gun #class
         self.gun_image = gun.image
 
+        self.count = 0
+        self.fires_list = []
+
     def update_frame(self, stand=False):
         if self.cat:
             if stand:
@@ -277,6 +282,7 @@ class Enemy(pygame.sprite.Sprite):
                     SCREEN.blit(self.gun.image, ((self.rect.x - 20) - 1 * (self.angle - 180) // 4,
                                                  (self.rect.y + self.image.get_size()[1] // 2 + 1 * (
                                                              self.angle - 180) // 4)))
+
             # else:
             #     self.gun.image = pygame.transform.flip(self.gun_image, True, False)
             #     SCREEN.blit(self.gun.image, (self.rect.x,
@@ -299,10 +305,61 @@ class Enemy(pygame.sprite.Sprite):
                 elif 0 < self.angle < 100:
                     SCREEN.blit(self.gun.image, (self.rect.x,
                                                  (self.rect.y + self.image.get_size()[1] // 2) - self.angle // 4))
-            # else:
+                self.fire(x, y, x_hero, y_hero, True)
+            else:
+                self.fire(x, y, x_hero, y_hero)
+            # els
             #     self.gun.image = self.gun_image
             #     SCREEN.blit(self.gun.image, (self.rect.x,
             #                                  (self.rect.y + self.image.get_size()[1] // 2)))
+    def fire(self,x, y, x_2, y_2, status=False):
+        if status:
+            self.count += 1
+            if self.count % 15 == 0:
+                self.count = 0
+                self.fires_list.append(
+                                [
+                                    math.atan2(y_2 - y,
+                                                x_2 - x),
+                                    x - 10,
+                                    y,
+                                    x,
+                                    y
+                                ]
+                            )
+        for x, elem in enumerate(self.fires_list):
+            sX = math.cos(elem[0]) * 5
+            sY = math.sin(elem[0]) * 5
+
+            print(x,'pul', elem[0])
+
+            elem[1] += sX
+            elem[2] += sY
+
+            x_ = elem[1] - elem[3]
+            y_ = elem[2] - elem[4]
+
+            sprite = pygame.sprite.Sprite()
+
+            image = pygame.Surface((2 * 5, 2 * 5),
+                                   pygame.SRCALPHA, 32)
+            sprite.image = image
+            sprite.rect = sprite.image.get_rect()
+            sprite.rect.x = elem[1]
+            sprite.rect.y = elem[2]
+
+            if (x_ ** 2 + y_ ** 2) ** 0.5 > 320:
+                self.fires_list.remove(elem)
+            elif pygame.sprite.spritecollideany(sprite, horizontal_borders) or pygame.sprite.spritecollideany(sprite,
+                                                                                                              vertical_borders):
+                self.fires_list.remove(elem)
+            elif pygame.sprite.spritecollideany(sprite, sprites_) or pygame.sprite.collide_rect(sprite, cube_red):
+                self.fires_list.remove(elem)
+            else:
+                pygame.draw.circle(image, pygame.Color("red"),
+                                   (5, 5), 5)
+                SCREEN.blit(image, [elem[1], elem[2]])
+
 
 
 class GroundTexture(pygame.sprite.Sprite):
@@ -339,6 +396,7 @@ class Cube(pygame.sprite.Sprite):
         self.rect.x += move_x
         self.rect.y += move_y
 
+cube_red = Cube(width=50, height=50, x=700, y=400, color='red')
 
 class Border(pygame.sprite.Sprite):
     # строго вертикальный или строго горизонтальный отрезок
@@ -404,9 +462,6 @@ def main_action():
 
     camera = Camera()
 
-    sprites = pygame.sprite.Group()
-    sprites_ = pygame.sprite.Group()
-
     firesList = []
 
     ak47 = Gun('gun.png')
@@ -416,7 +471,6 @@ def main_action():
     cube_new = Cube(width=50, height=50,  x=500, y=300)
     cube_new2 = Cube(width=50, height=50,  x=100, y=340)
     cube_new3 = Cube(width=50, height=50,  x=900, y=100)
-    cube_red = Cube(width=50, height=50, x=700, y=400, color='red')
 
     for i in range(5):
         enemy = Enemy(100 * random.randint(1, 10), 100 * random.randint(1, 6),gun=ak47, frames=DICT_IMAGES['enemy_red'], hero=hero)
