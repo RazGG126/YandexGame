@@ -342,16 +342,27 @@ class Cube(pygame.sprite.Sprite):
 
 class Border(pygame.sprite.Sprite):
     # строго вертикальный или строго горизонтальный отрезок
-    def __init__(self, x1, y1, x2, y2):
+    def __init__(self, x1, y1, x2, y2, pos):
         super().__init__(all_sprites)
         if x1 == x2:  # вертикальная стенка
-            self.add(vertical_borders)
-            self.image = pygame.Surface([1, y2 - y1])
-            self.rect = pygame.Rect(x1 - 30, y1, 30, y2 - y1)
+            if pos == 'l':
+                self.add(vertical_borders)
+                self.image = pygame.Surface([50, y2 - y1])
+                self.rect = pygame.Rect(x1 - 50, y1, 50, y2 - y1)
+            elif pos == 'r':
+                self.add(vertical_borders)
+                self.image = pygame.Surface([50, y2 - y1])
+                self.rect = pygame.Rect(x1 + 60, y1, 50, y2 - y1)
         else:  # горизонтальная стенка
-            self.add(horizontal_borders)
-            self.image = pygame.Surface([x2 - x1, 1])
-            self.rect = pygame.Rect(x1, y1, x2 - x1, 1)
+            if pos == 't':
+                self.add(horizontal_borders)
+                self.image = pygame.Surface([x2 - x1, 50])
+                self.rect = pygame.Rect(x1, y1 - 50, x2 - x1, 50)
+            elif pos == 'b':
+                self.add(horizontal_borders)
+                self.image = pygame.Surface([x2 - x1, 50])
+                self.rect = pygame.Rect(x1, y1 + 60, x2 - x1, 50)
+
 
 
 class Camera:
@@ -386,10 +397,10 @@ def main_action():
 
     init_frames()
 
-    Border(2, 2, 2000 - 2, 2)
-    Border(2, 2000 - 2, 2000 - 2, 2000 - 2)
-    Border(2, 2, 2, 2000 - 2)
-    Border(2000 - 2, 2, 2000 - 2, 2000 - 2)
+    Border(-50, 0, 2100, 0, 't')
+    Border(-50, 2000, 2100, 2000, 'b')
+    Border(0, 0, 0, 2100, 'l')
+    Border(2000, 0, 2000, 2100, 'r')
 
     camera = Camera()
 
@@ -503,7 +514,6 @@ def main_action():
                                (5, 5), 5)
                 SCREEN.blit(image, [elem[1], elem[2]])
 
-        # print(firesList)
         CLOCK.tick(FPS)
         pygame.display.flip()
     pygame.quit()
