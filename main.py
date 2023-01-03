@@ -72,6 +72,8 @@ class HeroMain(pygame.sprite.Sprite):
         self.angle = 0
         self.heavy = 0
 
+        self.health = 100
+
         self.moving = False
         self.moving_left = False
         self.moving_right = True
@@ -327,7 +329,7 @@ class Enemy(pygame.sprite.Sprite):
     def fire(self,x, y, x_2, y_2, camera, status=False):
         if status:
             self.count += 1
-            if self.count % 5 == 0:
+            if self.count % 4 == 0:
                 self.count = 0
                 self.fires_list.append(
                                 [
@@ -370,6 +372,9 @@ class Enemy(pygame.sprite.Sprite):
 
             if (x_ ** 2 + y_ ** 2) ** 0.5 > 320:
                 self.fires_list.remove(elem)
+            elif pygame.sprite.collide_rect(sprite, self.hero):
+                print('Hero damaged')
+                self.fires_list.remove(elem)
             elif pygame.sprite.spritecollideany(sprite, horizontal_borders) or pygame.sprite.spritecollideany(sprite,
                                                                                                               vertical_borders):
                 self.fires_list.remove(elem)
@@ -379,6 +384,7 @@ class Enemy(pygame.sprite.Sprite):
                 pygame.draw.circle(image, pygame.Color("red"),
                                    (5, 5), 5)
                 SCREEN.blit(image, [elem[1], elem[2]])
+            print(self.fires_list)
 
 
 
