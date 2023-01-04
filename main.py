@@ -198,15 +198,16 @@ class HeroMain(pygame.sprite.Sprite):
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, x, y, gun, frames, cat=False, hero=None, *groups: AbstractGroup):
         super().__init__(all_sprites, *groups)
-        self.frames = [frames] if not cat else frames
+        self.frames = frames
         self.cur_frame = 0
+        self.cur_frame_cat = 0
         self.cat = cat
         self.image = self.frames[self.cur_frame]
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
-        self.speed_x = 5
-        self.speed_y = 5
+        self.speed_x = 4
+        self.speed_y = 4
 
         self.hero = hero
 
@@ -225,31 +226,52 @@ class Enemy(pygame.sprite.Sprite):
         self.count = 0
         self.fires_list = []
 
-    def update_frame(self, stand=False):
+    def update_frame(self, stand=True):
         if self.cat:
-            if stand:
+            if not stand:
+                if self.moving_left:
+                    self.image = pygame.transform.flip(self.frames[self.cur_frame_cat // 4], True, False)
+                elif self.moving_right:
+                    self.image = self.frames[self.cur_frame_cat // 4]
+            else:
+                self.cur_frame_cat += 1
+                if self.cur_frame_cat > 15:
+                    self.cur_frame_cat = 0
+            if self.moving_left:
+                self.image = pygame.transform.flip(self.frames[self.cur_frame_cat // 4], True, False)
+            elif self.moving_right:
+                self.image = self.frames[self.cur_frame_cat // 4]
+        else:
+            if not self.moving:
                 if self.moving_left:
                     self.image = pygame.transform.flip(self.frames[self.cur_frame // 4], True, False)
                 elif self.moving_right:
                     self.image = self.frames[self.cur_frame // 4]
             else:
                 self.cur_frame += 1
-                if self.cur_frame > 15:
+                if self.cur_frame > 19:
                     self.cur_frame = 0
             if self.moving_left:
                 self.image = pygame.transform.flip(self.frames[self.cur_frame // 4], True, False)
             elif self.moving_right:
                 self.image = self.frames[self.cur_frame // 4]
-        else:
-            if not stand:
-                if self.moving_left:
-                    self.image = pygame.transform.flip(self.frames[self.cur_frame // 4], True, False)
-                elif self.moving_right:
-                    self.image = self.frames[self.cur_frame // 4]
+
 
     def update(self, camera):
         self.move_gun(camera)
         self.update_frame()
+        if self.moving:
+            #
+            self.move_x = math.cos(math.radians(self.angle)) * self.speed_x
+            self.move_y = math.sin(math.radians(self.angle)) * self.speed_y
+
+            self.rect.x += self.move_x
+            self.rect.y += self.move_y
+
+
+        self.move_x = 0
+        self.move_y = 0
+        self.moving = False
 
     def move_gun(self, camera):
 
@@ -271,6 +293,7 @@ class Enemy(pygame.sprite.Sprite):
             if ((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5 < self.strike_distance:
                 if (((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5) < (self.strike_distance - 100):
                     self.fire(x, y, x_hero, y_hero, camera, True)
+                    self.moving = True
                     repeat = False #отрисовка пуль без повторов
                 angleR = math.atan2(y_hero - y,
                                     x_hero - x)
@@ -302,6 +325,7 @@ class Enemy(pygame.sprite.Sprite):
             if ((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5 < self.strike_distance:
                 if (((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5) < (self.strike_distance - 100):
                     self.fire(x, y, x_hero, y_hero, camera, True)
+                    self.moving = True
                     repeat = False #отрисовка пуль без повторов
                 angleR = math.atan2(y_hero - y,
                                     x_hero - x)
@@ -384,7 +408,6 @@ class Enemy(pygame.sprite.Sprite):
                 pygame.draw.circle(image, pygame.Color("red"),
                                    (5, 5), 5)
                 SCREEN.blit(image, [elem[1], elem[2]])
-            print(self.fires_list)
 
 
 
@@ -503,7 +526,7 @@ def main_action():
     cube_new3 = Cube(width=50, height=50,  x=900, y=100)
 
     for i in range(5):
-        enemy = Enemy(100 * random.randint(1, 10), 100 * random.randint(1, 6),gun=ak47, frames=DICT_IMAGES['enemy_red'], hero=hero)
+        enemy = Enemy(100 * random.randint(1, 10), 100 * random.randint(1, 6),gun=ak47, frames=hero_main_frames, hero=hero)
         enemy_sprites.add(enemy)
 
     enemy_sprites.add(Enemy(1000, 500, gun=ak47, frames=DICT_IMAGES['cat'], cat=True, hero=hero))
