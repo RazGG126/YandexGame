@@ -22,6 +22,7 @@ vertical_borders = pygame.sprite.Group()
 horizontal_borders = pygame.sprite.Group()
 sprites = pygame.sprite.Group()
 sprites_ = pygame.sprite.Group()
+unmoving_sprites = pygame.sprite.Group()
 mousePos = {'x': 0, 'y': 0}
 
 
@@ -206,8 +207,8 @@ class Enemy(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
-        self.speed_x = 4
-        self.speed_y = 4
+        self.speed_x = 2
+        self.speed_y = 2
 
         self.hero = hero
 
@@ -256,7 +257,6 @@ class Enemy(pygame.sprite.Sprite):
             elif self.moving_right:
                 self.image = self.frames[self.cur_frame // 4]
 
-
     def update(self, camera):
         self.move_gun(camera)
         self.update_frame()
@@ -266,8 +266,12 @@ class Enemy(pygame.sprite.Sprite):
             self.move_y = math.sin(math.radians(self.angle)) * self.speed_y
 
             self.rect.x += self.move_x
-            self.rect.y += self.move_y
+            if pygame.sprite.spritecollideany(self, unmoving_sprites):
+                self.rect.x -= self.move_x * 1.5
 
+            self.rect.y += self.move_y
+            if pygame.sprite.spritecollideany(self, unmoving_sprites):
+                self.rect.y -= self.move_y * 1.5
 
         self.move_x = 0
         self.move_y = 0
@@ -291,10 +295,16 @@ class Enemy(pygame.sprite.Sprite):
         if self.moving_left:
             repeat = True
             if ((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5 < self.strike_distance:
+                self.moving = True
                 if (((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5) < (self.strike_distance - 100):
                     self.fire(x, y, x_hero, y_hero, camera, True)
-                    self.moving = True
                     repeat = False #отрисовка пуль без повторов
+                if (((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5) < (self.strike_distance - 150):
+                    self.moving =  False
+                #
+                # if (((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5) < (self.strike_distance - 150):
+                #     self.moving = False
+
                 angleR = math.atan2(y_hero - y,
                                     x_hero - x)
                 self.angle = angleR * 180 / math.pi
@@ -323,10 +333,13 @@ class Enemy(pygame.sprite.Sprite):
         elif self.moving_right:
             repeat= True
             if ((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5 < self.strike_distance:
+                self.moving = True
                 if (((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5) < (self.strike_distance - 100):
                     self.fire(x, y, x_hero, y_hero, camera, True)
-                    self.moving = True
                     repeat = False #отрисовка пуль без повторов
+                if (((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5) < (self.strike_distance - 150):
+                    self.moving =  False
+
                 angleR = math.atan2(y_hero - y,
                                     x_hero - x)
                 self.angle = angleR * 180 / math.pi
@@ -366,8 +379,8 @@ class Enemy(pygame.sprite.Sprite):
                                 ]
                             )
         for x, elem in enumerate(self.fires_list):
-            sX = math.cos(elem[0]) * 20
-            sY = math.sin(elem[0]) * 20
+            sX = math.cos(elem[0]) * 10
+            sY = math.sin(elem[0]) * 10
 
             elem[1] += sX
             elem[2] += sY
@@ -407,6 +420,7 @@ class Enemy(pygame.sprite.Sprite):
             else:
                 pygame.draw.circle(image, pygame.Color("red"),
                                    (5, 5), 5)
+            if (x_ ** 2 + y_ ** 2) ** 0.5 > 50:
                 SCREEN.blit(image, [elem[1], elem[2]])
 
 
@@ -533,6 +547,7 @@ def main_action():
 
     sprites.add(hero, cube_red, cube_new, cube_new2, cube_new3)
     sprites_.add(cube_new, cube_new2, cube_new3)
+    unmoving_sprites.add(cube_new, cube_new2, cube_new3, cube_red)
     while running:
         SCREEN.fill(pygame.Color('black'))
         for event in pygame.event.get():
@@ -631,6 +646,7 @@ def main_action():
             else:
                 pygame.draw.circle(image, pygame.Color("orange"),
                                (5, 5), 5)
+            if (x_ ** 2 + y_ ** 2) ** 0.5 > 50:
                 SCREEN.blit(image, [elem[1], elem[2]])
 
         CLOCK.tick(FPS)
