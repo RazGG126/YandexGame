@@ -214,6 +214,7 @@ class Enemy(pygame.sprite.Sprite):
 
         self.angle = 0
         self.strike_distance = 350
+        self.stop_distance = self.strike_distance - random.randrange(120, 150)
 
         self.moving = False
         self.moving_left = False
@@ -259,23 +260,28 @@ class Enemy(pygame.sprite.Sprite):
 
     def update(self, camera):
         self.move_gun(camera)
-        self.update_frame()
         if self.moving:
-            #
-            self.move_x = math.cos(math.radians(self.angle)) * self.speed_x
-            self.move_y = math.sin(math.radians(self.angle)) * self.speed_y
+
+            dl_x = self.hero.rect.x - self.rect.x
+            dl_y = self.hero.rect.y - self.rect.y
+
+            if self.stop_distance - 50 <= (dl_x ** 2 + dl_y ** 2) ** 0.5 <= self.stop_distance:
+                print('yes')
+
+            if abs(dl_x) >= abs(dl_y):
+                self.move_x = self.speed_x if dl_x >= 0 else -self.speed_x
+            else:
+                self.move_y = self.speed_y if dl_y >= 0 else -self.speed_y
 
             self.rect.x += self.move_x
-            if pygame.sprite.spritecollideany(self, unmoving_sprites):
-                self.rect.x -= self.move_x * 1.5
-
             self.rect.y += self.move_y
             if pygame.sprite.spritecollideany(self, unmoving_sprites):
-                self.rect.y -= self.move_y * 1.5
+                self.rect.x -= self.move_x
+                self.rect.y -= self.move_y
 
+            self.update_frame()
         self.move_x = 0
         self.move_y = 0
-        self.moving = False
 
     def move_gun(self, camera):
 
@@ -283,6 +289,8 @@ class Enemy(pygame.sprite.Sprite):
         y_hero = self.hero.rect.y + self.hero.image.get_rect()[3] // 2
         x = self.rect.x + self.image.get_rect()[2] // 2
         y = self.rect.y + self.image.get_rect()[3] // 2
+
+        self.stop_distance = self.strike_distance - random.randrange(120, 150)
 
         if ((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5 < self.strike_distance + 50:
             if (x_hero - x) < 0:
@@ -299,8 +307,8 @@ class Enemy(pygame.sprite.Sprite):
                 if (((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5) < (self.strike_distance - 100):
                     self.fire(x, y, x_hero, y_hero, camera, True)
                     repeat = False #отрисовка пуль без повторов
-                if (((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5) < (self.strike_distance - 150):
-                    self.moving =  False
+                if (((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5) < self.stop_distance:
+                    self.moving = False
                 #
                 # if (((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5) < (self.strike_distance - 150):
                 #     self.moving = False
@@ -331,13 +339,13 @@ class Enemy(pygame.sprite.Sprite):
             #                                  (self.rect.y + self.image.get_size()[1] // 2)))
 
         elif self.moving_right:
-            repeat= True
+            repeat = True
             if ((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5 < self.strike_distance:
                 self.moving = True
                 if (((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5) < (self.strike_distance - 100):
                     self.fire(x, y, x_hero, y_hero, camera, True)
                     repeat = False #отрисовка пуль без повторов
-                if (((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5) < (self.strike_distance - 150):
+                if (((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5) < self.stop_distance:
                     self.moving =  False
 
                 angleR = math.atan2(y_hero - y,
@@ -363,10 +371,11 @@ class Enemy(pygame.sprite.Sprite):
             #     self.gun.image = self.gun_image
             #     SCREEN.blit(self.gun.image, (self.rect.x,
             #                                  (self.rect.y + self.image.get_size()[1] // 2)))
+
     def fire(self,x, y, x_2, y_2, camera, status=False):
         if status:
             self.count += 1
-            if self.count % 4 == 0:
+            if self.count % 15 == 0:
                 self.count = 0
                 self.fires_list.append(
                                 [
@@ -379,8 +388,8 @@ class Enemy(pygame.sprite.Sprite):
                                 ]
                             )
         for x, elem in enumerate(self.fires_list):
-            sX = math.cos(elem[0]) * 10
-            sY = math.sin(elem[0]) * 10
+            sX = math.cos(elem[0]) * 20
+            sY = math.sin(elem[0]) * 20
 
             elem[1] += sX
             elem[2] += sY
@@ -422,8 +431,6 @@ class Enemy(pygame.sprite.Sprite):
                                    (5, 5), 5)
             if (x_ ** 2 + y_ ** 2) ** 0.5 > 50:
                 SCREEN.blit(image, [elem[1], elem[2]])
-
-
 
 class GroundTexture(pygame.sprite.Sprite):
     def __init__(self, tile_type, pos_x, pos_y):
@@ -499,7 +506,6 @@ class Camera:
             obj.rect.y += self.dy
         else:
             return x  + self.dx, y + self.dy
-
 
     # позиционировать камеру на объекте target
     def update(self, target):
