@@ -215,6 +215,7 @@ class Enemy(pygame.sprite.Sprite):
         self.angle = 0
         self.strike_distance = 350
         self.stop_distance = self.strike_distance - random.randrange(120, 150)
+        self.can_strike = True
 
         self.moving = False
         self.moving_left = False
@@ -265,23 +266,28 @@ class Enemy(pygame.sprite.Sprite):
             dl_x = self.hero.rect.x - self.rect.x
             dl_y = self.hero.rect.y - self.rect.y
 
-            if self.stop_distance - 50 <= (dl_x ** 2 + dl_y ** 2) ** 0.5 <= self.stop_distance:
-                print('yes')
+            # if self.stop_distance - 50 <= (dl_x ** 2 + dl_y ** 2) ** 0.5 <= self.stop_distance:
+            #     print('yes')
+
+            self.move_x = self.speed_x if dl_x >= 0 else -self.speed_x
+            self.move_y = self.speed_y if dl_y >= 0 else -self.speed_y
 
             if abs(dl_x) >= abs(dl_y):
-                self.move_x = self.speed_x if dl_x >= 0 else -self.speed_x
+                # print(self.move_x, self.move_y)
+                self.rect.x += self.move_x
+                if pygame.sprite.spritecollideany(self, unmoving_sprites):
+                    self.rect.x -= self.move_x
+                    self.rect.y += abs(self.move_y)
             else:
-                self.move_y = self.speed_y if dl_y >= 0 else -self.speed_y
-
-            self.rect.x += self.move_x
-            self.rect.y += self.move_y
-            if pygame.sprite.spritecollideany(self, unmoving_sprites):
-                self.rect.x -= self.move_x
-                self.rect.y -= self.move_y
+                self.rect.y += self.move_y
+                if pygame.sprite.spritecollideany(self, unmoving_sprites):
+                    self.rect.y -= self.move_y
+                    self.rect.x += abs(self.move_x)
 
             self.update_frame()
         self.move_x = 0
         self.move_y = 0
+        self.moving = False
 
     def move_gun(self, camera):
 
@@ -432,6 +438,7 @@ class Enemy(pygame.sprite.Sprite):
             if (x_ ** 2 + y_ ** 2) ** 0.5 > 50:
                 SCREEN.blit(image, [elem[1], elem[2]])
 
+
 class GroundTexture(pygame.sprite.Sprite):
     def __init__(self, tile_type, pos_x, pos_y):
         super().__init__(ground_sprites, all_sprites)
@@ -545,11 +552,11 @@ def main_action():
     cube_new2 = Cube(width=50, height=50,  x=100, y=340)
     cube_new3 = Cube(width=50, height=50,  x=900, y=100)
 
-    for i in range(5):
+    for i in range(1):
         enemy = Enemy(100 * random.randint(1, 10), 100 * random.randint(1, 6),gun=ak47, frames=hero_main_frames, hero=hero)
         enemy_sprites.add(enemy)
-
-    enemy_sprites.add(Enemy(1000, 500, gun=ak47, frames=DICT_IMAGES['cat'], cat=True, hero=hero))
+    #
+    # enemy_sprites.add(Enemy(1000, 500, gun=ak47, frames=DICT_IMAGES['cat'], cat=True, hero=hero))
 
     sprites.add(hero, cube_red, cube_new, cube_new2, cube_new3)
     sprites_.add(cube_new, cube_new2, cube_new3)
