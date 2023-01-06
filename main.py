@@ -215,6 +215,7 @@ class Enemy(pygame.sprite.Sprite):
         self.angle = 0
         self.strike_distance = 350
         self.stop_distance = self.strike_distance - random.randrange(120, 150)
+        self.d = self.stop_distance
         self.can_strike = True
 
         self.moving = False
@@ -222,6 +223,8 @@ class Enemy(pygame.sprite.Sprite):
         self.moving_right = True
         self.move_x = 0
         self.move_y = 0
+        self.move_x_v = 0
+        self.move_y_v = 0
 
         self.gun = gun #class
         self.gun_image = gun.image
@@ -273,18 +276,19 @@ class Enemy(pygame.sprite.Sprite):
             self.move_y = self.speed_y if dl_y >= 0 else -self.speed_y
 
             if abs(dl_x) >= abs(dl_y):
-                # print(self.move_x, self.move_y)
                 self.rect.x += self.move_x
+                self.move_x_v = self.move_x
                 if pygame.sprite.spritecollideany(self, unmoving_sprites):
                     self.rect.x -= self.move_x
-                    self.rect.y += abs(self.move_y)
+                    self.rect.y += self.move_y_v
             else:
                 self.rect.y += self.move_y
+                self.move_y_v = self.move_y
                 if pygame.sprite.spritecollideany(self, unmoving_sprites):
                     self.rect.y -= self.move_y
-                    self.rect.x += abs(self.move_x)
+                    self.rect.x += self.move_x_v
 
-            self.update_frame()
+        self.update_frame()
         self.move_x = 0
         self.move_y = 0
         self.moving = False
@@ -295,8 +299,8 @@ class Enemy(pygame.sprite.Sprite):
         y_hero = self.hero.rect.y + self.hero.image.get_rect()[3] // 2
         x = self.rect.x + self.image.get_rect()[2] // 2
         y = self.rect.y + self.image.get_rect()[3] // 2
-
-        self.stop_distance = self.strike_distance - random.randrange(120, 150)
+        #
+        # self.stop_distance = self.strike_distance - random.randrange(120, 150)
 
         if ((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5 < self.strike_distance + 50:
             if (x_hero - x) < 0:
@@ -552,7 +556,7 @@ def main_action():
     cube_new2 = Cube(width=50, height=50,  x=100, y=340)
     cube_new3 = Cube(width=50, height=50,  x=900, y=100)
 
-    for i in range(1):
+    for i in range(10):
         enemy = Enemy(100 * random.randint(1, 10), 100 * random.randint(1, 6),gun=ak47, frames=hero_main_frames, hero=hero)
         enemy_sprites.add(enemy)
     #
