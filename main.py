@@ -210,6 +210,8 @@ class Enemy(pygame.sprite.Sprite):
         self.speed_x = 2
         self.speed_y = 2
 
+        self.health = 100
+
         self.hero = hero
 
         self.angle = 0
@@ -655,7 +657,11 @@ def main_action():
             if (x_ ** 2 + y_ ** 2) ** 0.5 > 320:
                 firesList.remove(elem)
             elif pygame.sprite.spritecollideany(sprite, enemy_sprites):
-                print('Enemi')
+                for person in pygame.sprite.spritecollide(sprite, enemy_sprites, False):
+                    person.health -= 10
+                    if person.health <= 0:
+                        person.kill()
+                firesList.remove(elem)
             elif pygame.sprite.spritecollideany(sprite, horizontal_borders) or pygame.sprite.spritecollideany(sprite, vertical_borders):
                 firesList.remove(elem)
             elif pygame.sprite.spritecollideany(sprite, sprites_) or pygame.sprite.collide_rect(sprite, cube_red):
