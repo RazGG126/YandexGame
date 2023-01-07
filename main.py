@@ -48,7 +48,7 @@ DICT_IMAGES = {
     'enemy_red': load_image(r'enemy_red.png'),
     'stone_block': load_image(r'stone_block.png'),
     'cat': [load_image('cat.png'), load_image('cat_2.png'), load_image('cat.png'), load_image('cat_3.png')],
-    'box': load_image('box.png'),
+    'box': load_image('box.jpg'),
     'ground_sand': load_image('ground_sand.png'),
     'ground_stone': load_image('ground_stone.jpg'),
 }
@@ -85,7 +85,7 @@ class HeroMain(pygame.sprite.Sprite):
         self.move_x = 0
         self.move_y = 0
 
-        self.gun = gun #class
+        self.gun = gun  # class
         self.gun_image = gun.image
         self.strike_can = True
 
@@ -160,9 +160,10 @@ class HeroMain(pygame.sprite.Sprite):
             self.rect.x -= self.move_x
             self.rect.y -= self.move_y
             self.rect.x += self.move_x
-            self.rect.y += self.move_y
             if pygame.sprite.spritecollideany(self, sprites):
                 self.rect.x -= self.move_x
+            self.rect.y += self.move_y
+            if pygame.sprite.spritecollideany(self, sprites):
                 self.rect.y -= self.move_y
             self.rect.x -= self.move_x
             self.rect.y -= self.move_y
@@ -201,12 +202,11 @@ class HeroMain(pygame.sprite.Sprite):
 
 
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self, x, y, gun, frames, cat=False, hero=None, *groups: AbstractGroup):
+    def __init__(self, x, y, gun, frames, hero=None, *groups: AbstractGroup):
         super().__init__(all_sprites, *groups)
         self.frames = frames
         self.cur_frame = 0
         self.cur_frame_cat = 0
-        self.cat = cat
         self.image = self.frames[self.cur_frame]
         self.rect = self.image.get_rect()
         self.rect.x = x
@@ -239,34 +239,19 @@ class Enemy(pygame.sprite.Sprite):
         self.fires_list = []
 
     def update_frame(self, stand=True):
-        if self.cat:
-            if not stand:
-                if self.moving_left:
-                    self.image = pygame.transform.flip(self.frames[self.cur_frame_cat // 4], True, False)
-                elif self.moving_right:
-                    self.image = self.frames[self.cur_frame_cat // 4]
-            else:
-                self.cur_frame_cat += 1
-                if self.cur_frame_cat > 15:
-                    self.cur_frame_cat = 0
-            if self.moving_left:
-                self.image = pygame.transform.flip(self.frames[self.cur_frame_cat // 4], True, False)
-            elif self.moving_right:
-                self.image = self.frames[self.cur_frame_cat // 4]
-        else:
-            if not self.moving:
-                if self.moving_left:
-                    self.image = pygame.transform.flip(self.frames[self.cur_frame // 4], True, False)
-                elif self.moving_right:
-                    self.image = self.frames[self.cur_frame // 4]
-            else:
-                self.cur_frame += 1
-                if self.cur_frame > 19:
-                    self.cur_frame = 0
+        if not self.moving:
             if self.moving_left:
                 self.image = pygame.transform.flip(self.frames[self.cur_frame // 4], True, False)
             elif self.moving_right:
                 self.image = self.frames[self.cur_frame // 4]
+        else:
+            self.cur_frame += 1
+            if self.cur_frame > 19:
+                self.cur_frame = 0
+        if self.moving_left:
+            self.image = pygame.transform.flip(self.frames[self.cur_frame // 4], True, False)
+        elif self.moving_right:
+            self.image = self.frames[self.cur_frame // 4]
 
     def update(self, camera):
         self.move_gun(camera)
