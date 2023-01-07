@@ -24,6 +24,7 @@ sprites = pygame.sprite.Group()
 sprites_ = pygame.sprite.Group()
 unmoving_sprites = pygame.sprite.Group()
 mousePos = {'x': 0, 'y': 0}
+hero = None
 
 
 def load_image(name, colorkey=None):
@@ -283,6 +284,9 @@ class Enemy(pygame.sprite.Sprite):
                 if pygame.sprite.spritecollideany(self, unmoving_sprites):
                     self.rect.x -= self.move_x
                     self.rect.y += self.move_y_v
+                    if pygame.sprite.spritecollideany(self, unmoving_sprites):
+                        self.rect.y -= self.move_y_v
+                        self.move_y_v = -self.move_y_v
                     self.stop_distance = 0
                 else:
                     self.stop_distance = self.d
@@ -292,6 +296,9 @@ class Enemy(pygame.sprite.Sprite):
                 if pygame.sprite.spritecollideany(self, unmoving_sprites):
                     self.rect.y -= self.move_y
                     self.rect.x += self.move_x_v
+                    if pygame.sprite.spritecollideany(self, unmoving_sprites):
+                        self.rect.x -= self.move_x_v
+                        self.move_x_v = -self.move_x_v
                     self.stop_distance = 0
                 else:
                     self.stop_distance = self.d
@@ -486,7 +493,7 @@ class Cube(pygame.sprite.Sprite):
         self.rect.x += move_x
         self.rect.y += move_y
 
-cube_red = Cube(width=50, height=50, x=700, y=400, color='red')
+cube_red = None
 
 class Border(pygame.sprite.Sprite):
     # строго вертикальный или строго горизонтальный отрезок
@@ -511,7 +518,7 @@ class Border(pygame.sprite.Sprite):
                 self.image = pygame.Surface([x2 - x1, 50])
                 self.rect = pygame.Rect(x1, y1 + 60, x2 - x1, 50)
 
-
+ak47 = Gun('gun.png')
 
 class Camera:
     # зададим начальный сдвиг камеры
@@ -534,13 +541,44 @@ class Camera:
 
 
 def init_frames():
-    global hero_main_frames
+    global hero_main_frames, cube_red, hero
     for i in range(1, 7):
         hero_main_frames.append(load_image(rf'walk\{i}.png'))
 
     for y in range((2000 // 86) + 1):
         for x in range((2000 // 86) + 1):
             GroundTexture('ground_ender', x, y)
+
+    world = []
+    file = open('game_map.txt', 'r')
+    for line in file:
+        line = line.strip()
+        arr = []
+        for elem in line:
+            arr.append(int(elem))
+        world.append(arr)
+    file.close()
+
+    for row in range(len(world)):
+        for col in range(len(world[row])):
+            x, y = col * 10, row * 10
+
+            if world[row][col] == 1:
+                cube = Cube(width=50, height=50, x=x, y=y)
+                sprites.add(cube)
+                sprites_.add(cube)
+                unmoving_sprites.add(cube)
+            elif world[row][col] == 2:
+                cube_red = Cube(width=50, height=50, x=x, y=y, color='red')
+                sprites.add(cube_red)
+                unmoving_sprites.add(cube_red)
+            elif world[row][col] == 3:
+                enemy = Enemy(x, y, gun=ak47,
+                              frames=hero_main_frames, hero=None)
+                enemy_sprites.add(enemy)
+            elif world[row][col] == 4:
+                hero = HeroMain(x, y, gun=ak47, frames=hero_main_frames)
+                sprites.add(hero)
 
 
 def main_action():
@@ -557,23 +595,21 @@ def main_action():
 
     firesList = []
 
-    ak47 = Gun('gun.png')
 
-    hero = HeroMain(x=200, y=600, gun=ak47, frames=hero_main_frames)
+    # cube_new = Cube(width=50, height=50,  x=500, y=300)
+    # cube_new2 = Cube(width=50, height=50,  x=100, y=340)
+    # cube_new3 = Cube(width=50, height=50,  x=900, y=100)
 
-    cube_new = Cube(width=50, height=50,  x=500, y=300)
-    cube_new2 = Cube(width=50, height=50,  x=100, y=340)
-    cube_new3 = Cube(width=50, height=50,  x=900, y=100)
-
-    for i in range(1):
-        enemy = Enemy(100 * random.randint(1, 10), 100 * random.randint(1, 6),gun=ak47, frames=hero_main_frames, hero=hero)
-        enemy_sprites.add(enemy)
+    for sprite in enemy_sprites:
+        sprite.hero = hero
+    # for i in range(1):
+    #     enemy = Enemy(100 * random.randint(1, 10), 100 * random.randint(1, 6),gun=ak47, frames=hero_main_frames, hero=hero)
+    #     enemy_sprites.add(enemy)
     #
     # enemy_sprites.add(Enemy(1000, 500, gun=ak47, frames=DICT_IMAGES['cat'], cat=True, hero=hero))
 
-    sprites.add(hero, cube_red, cube_new, cube_new2, cube_new3)
-    sprites_.add(cube_new, cube_new2, cube_new3)
-    unmoving_sprites.add(cube_new, cube_new2, cube_new3, cube_red)
+    # sprites_.add(cube_new, cube_new2, cube_new3)
+    # unmoving_sprites.add(cube_new, cube_new2, cube_new3, cube_red)
     while running:
         SCREEN.fill(pygame.Color('black'))
         for event in pygame.event.get():
