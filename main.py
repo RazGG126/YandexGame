@@ -47,7 +47,10 @@ DICT_IMAGES = {
     'ground_ender': load_image(r'ground\ender_block.png'),
     'enemy_red': load_image(r'enemy_red.png'),
     'stone_block': load_image(r'stone_block.png'),
-    'cat': [load_image('cat.png'), load_image('cat_2.png'), load_image('cat.png'), load_image('cat_3.png')]
+    'cat': [load_image('cat.png'), load_image('cat_2.png'), load_image('cat.png'), load_image('cat_3.png')],
+    'box': load_image('box.png'),
+    'ground_sand': load_image('ground_sand.png'),
+    'ground_stone': load_image('ground_stone.jpg'),
 }
 
 
@@ -226,8 +229,8 @@ class Enemy(pygame.sprite.Sprite):
         self.moving_right = True
         self.move_x = 0
         self.move_y = 0
-        self.move_x_v = 0
-        self.move_y_v = 0
+        self.move_x_v = 2
+        self.move_y_v = 2
 
         self.gun = gun  # class
         self.gun_image = gun.image
@@ -286,7 +289,6 @@ class Enemy(pygame.sprite.Sprite):
                     self.rect.y += self.move_y_v
                     if pygame.sprite.spritecollideany(self, unmoving_sprites):
                         self.rect.y -= self.move_y_v
-                        self.move_y_v = -self.move_y_v
                     self.stop_distance = 0
                 else:
                     self.stop_distance = self.d
@@ -298,7 +300,6 @@ class Enemy(pygame.sprite.Sprite):
                     self.rect.x += self.move_x_v
                     if pygame.sprite.spritecollideany(self, unmoving_sprites):
                         self.rect.x -= self.move_x_v
-                        self.move_x_v = -self.move_x_v
                     self.stop_distance = 0
                 else:
                     self.stop_distance = self.d
@@ -470,9 +471,9 @@ class GroundTexture(pygame.sprite.Sprite):
 
 
 class Cube(pygame.sprite.Sprite):
-    def __init__(self, width, height, x, y, color=None, *groups: AbstractGroup):
+    def __init__(self, width, height, x, y, image=DICT_IMAGES['box'], color=None, *groups: AbstractGroup):
         super().__init__(all_sprites, *groups)
-        self.image = load_image('box.png') if color is None else DICT_IMAGES['stone_block']
+        self.image = image if color is None else DICT_IMAGES['stone_block']
         self.rect = self.image.get_rect()
         self.mask = pygame.mask.from_surface(self.image)
         self.rect.x = x
@@ -493,7 +494,9 @@ class Cube(pygame.sprite.Sprite):
         self.rect.x += move_x
         self.rect.y += move_y
 
+
 cube_red = None
+
 
 class Border(pygame.sprite.Sprite):
     # строго вертикальный или строго горизонтальный отрезок
@@ -517,6 +520,7 @@ class Border(pygame.sprite.Sprite):
                 self.add(horizontal_borders)
                 self.image = pygame.Surface([x2 - x1, 50])
                 self.rect = pygame.Rect(x1, y1 + 60, x2 - x1, 50)
+
 
 ak47 = Gun('gun.png')
 
@@ -559,26 +563,51 @@ def init_frames():
         world.append(arr)
     file.close()
 
+    boxes = []
+    ground = []
+    cube_r = []
+    enemies = []
+    hero_l = []
+
     for row in range(len(world)):
         for col in range(len(world[row])):
             x, y = col * 10, row * 10
 
             if world[row][col] == 1:
-                cube = Cube(width=50, height=50, x=x, y=y)
-                sprites.add(cube)
-                sprites_.add(cube)
-                unmoving_sprites.add(cube)
+                boxes.append((x, y))
             elif world[row][col] == 2:
-                cube_red = Cube(width=50, height=50, x=x, y=y, color='red')
-                sprites.add(cube_red)
-                unmoving_sprites.add(cube_red)
+                cube_r.append((x, y))
             elif world[row][col] == 3:
-                enemy = Enemy(x, y, gun=ak47,
-                              frames=hero_main_frames, hero=None)
-                enemy_sprites.add(enemy)
+                enemies.append((x, y))
             elif world[row][col] == 4:
-                hero = HeroMain(x, y, gun=ak47, frames=hero_main_frames)
-                sprites.add(hero)
+                hero_l.append((x, y))
+            elif world[row][col] == 5 or world[row][col] == 6:
+                ground.append((x, y, world[row][col]))
+
+    for elem in enemies:
+        enemy = Enemy(elem[0], elem[1], gun=ak47,
+                      frames=hero_main_frames, hero=None)
+        enemy_sprites.add(enemy)
+
+    for elem in ground:
+        cube = Cube(width=50, height=50, x=elem[0], y=elem[1],
+                    image=DICT_IMAGES['ground_stone'] if elem[2] == 6 else DICT_IMAGES['ground_sand'])
+        sprites.add(cube)
+
+    for elem in boxes:
+        cube = Cube(width=50, height=50, x=elem[0], y=elem[1])
+        sprites.add(cube)
+        sprites_.add(cube)
+        unmoving_sprites.add(cube)
+
+    for elem in cube_r:
+        cube_red = Cube(width=50, height=50, x=elem[0], y=elem[1], color='red')
+        sprites.add(cube_red)
+        unmoving_sprites.add(cube_red)
+
+    for elem in hero_l:
+        hero = HeroMain(elem[0], elem[1], gun=ak47, frames=hero_main_frames)
+        sprites.add(hero)
 
 
 def main_action():
@@ -664,8 +693,8 @@ def main_action():
             hero.move_y += hero.speed_y
 
         ground_sprites.draw(SCREEN)
-        enemy_sprites.draw(SCREEN)
         sprites.draw(SCREEN)
+        enemy_sprites.draw(SCREEN)
         sprites.update(hero, cube_red, sprites_, enemy_sprites)
         enemy_sprites.update(camera)
         for elem in firesList:
@@ -697,7 +726,7 @@ def main_action():
             sprite.rect.x = elem[1]
             sprite.rect.y = elem[2]
 
-            if (x_ ** 2 + y_ ** 2) ** 0.5 > 320:
+            if (x_ ** 2 + y_ ** 2) ** 0.5 > 280:
                 firesList.remove(elem)
             elif pygame.sprite.spritecollideany(sprite, enemy_sprites):
                 for person in pygame.sprite.spritecollide(sprite, enemy_sprites, False):
