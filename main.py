@@ -67,8 +67,8 @@ class HeroMain(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
-        self.speed_x = 5
-        self.speed_y = 5
+        self.speed_x = 4
+        self.speed_y = 4
 
         self.angle = 0
         self.heavy = 0
@@ -216,7 +216,7 @@ class Enemy(pygame.sprite.Sprite):
 
         self.angle = 0
         self.strike_distance = 350
-        self.stop_distance = self.strike_distance - random.randrange(120, 150)
+        self.stop_distance = self.strike_distance - random.randrange(200, 250)
         self.d = self.stop_distance
         self.can_strike = True
 
@@ -228,7 +228,7 @@ class Enemy(pygame.sprite.Sprite):
         self.move_x_v = 0
         self.move_y_v = 0
 
-        self.gun = gun #class
+        self.gun = gun  # class
         self.gun_image = gun.image
 
         self.count = 0
@@ -283,17 +283,21 @@ class Enemy(pygame.sprite.Sprite):
                 if pygame.sprite.spritecollideany(self, unmoving_sprites):
                     self.rect.x -= self.move_x
                     self.rect.y += self.move_y_v
+                    self.stop_distance = 0
+                else:
+                    self.stop_distance = self.d
             else:
                 self.rect.y += self.move_y
                 self.move_y_v = self.move_y
                 if pygame.sprite.spritecollideany(self, unmoving_sprites):
                     self.rect.y -= self.move_y
                     self.rect.x += self.move_x_v
-
+                    self.stop_distance = 0
+                else:
+                    self.stop_distance = self.d
         self.update_frame()
         self.move_x = 0
         self.move_y = 0
-        self.moving = False
 
     def move_gun(self, camera):
 
@@ -315,8 +319,8 @@ class Enemy(pygame.sprite.Sprite):
         if self.moving_left:
             repeat = True
             if ((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5 < self.strike_distance:
-                self.moving = True
                 if (((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5) < (self.strike_distance - 100):
+                    self.moving = True
                     self.fire(x, y, x_hero, y_hero, camera, True)
                     repeat = False #отрисовка пуль без повторов
                 if (((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5) < self.stop_distance:
@@ -353,8 +357,8 @@ class Enemy(pygame.sprite.Sprite):
         elif self.moving_right:
             repeat = True
             if ((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5 < self.strike_distance:
-                self.moving = True
                 if (((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5) < (self.strike_distance - 100):
+                    self.moving = True
                     self.fire(x, y, x_hero, y_hero, camera, True)
                     repeat = False #отрисовка пуль без повторов
                 if (((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5) < self.stop_distance:
@@ -431,7 +435,10 @@ class Enemy(pygame.sprite.Sprite):
             if (x_ ** 2 + y_ ** 2) ** 0.5 > 320:
                 self.fires_list.remove(elem)
             elif pygame.sprite.collide_rect(sprite, self.hero):
-                print('Hero damaged')
+                self.hero.health -= 10
+                print(f'Hero damaged: {self.hero.health}')
+                if self.hero.health <= 0:
+                    print('hero died')
                 self.fires_list.remove(elem)
             elif pygame.sprite.spritecollideany(sprite, horizontal_borders) or pygame.sprite.spritecollideany(sprite,
                                                                                                               vertical_borders):
@@ -558,7 +565,7 @@ def main_action():
     cube_new2 = Cube(width=50, height=50,  x=100, y=340)
     cube_new3 = Cube(width=50, height=50,  x=900, y=100)
 
-    for i in range(10):
+    for i in range(1):
         enemy = Enemy(100 * random.randint(1, 10), 100 * random.randint(1, 6),gun=ak47, frames=hero_main_frames, hero=hero)
         enemy_sprites.add(enemy)
     #
@@ -661,6 +668,7 @@ def main_action():
                     person.health -= 10
                     if person.health <= 0:
                         person.kill()
+                        print('enemy died')
                 firesList.remove(elem)
             elif pygame.sprite.spritecollideany(sprite, horizontal_borders) or pygame.sprite.spritecollideany(sprite, vertical_borders):
                 firesList.remove(elem)
