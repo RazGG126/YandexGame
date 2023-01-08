@@ -25,6 +25,7 @@ sprites_ = pygame.sprite.Group()
 unmoving_sprites = pygame.sprite.Group()
 mousePos = {'x': 0, 'y': 0}
 hero = None
+cat = None
 
 
 def load_image(name, colorkey=None):
@@ -51,7 +52,8 @@ DICT_IMAGES = {
     'box': load_image('box.jpg'),
     'ground_sand': load_image('ground_sand.png'),
     'ground_stone': load_image('ground_stone.jpg'),
-    'bush': load_image('bush_mine.png')
+    'bush': load_image('bush_mine.png'),
+    'branch': load_image('branch.png'),
 }
 
 
@@ -61,6 +63,21 @@ class Gun(pygame.sprite.Sprite):
         self.gun_image = gun_image
         self.image = load_image(gun_image)
         self.rect = self.image.get_rect()
+
+
+class Cat(pygame.sprite.Sprite):
+    def __init__(self,x, y, frames, *groups: AbstractGroup):
+        super().__init__(*groups)
+        self.frames = frames
+        self.cur_frame = 0
+        self.image = self.frames[self.cur_frame]
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.speed_x = 4
+        self.speed_y = 4
+
+        self.stand = True
 
 
 class HeroMain(pygame.sprite.Sprite):
@@ -444,7 +461,7 @@ class Enemy(pygame.sprite.Sprite):
             elif pygame.sprite.spritecollideany(sprite, horizontal_borders) or pygame.sprite.spritecollideany(sprite,
                                                                                                               vertical_borders):
                 self.fires_list.remove(elem)
-            elif pygame.sprite.spritecollideany(sprite, sprites_) or pygame.sprite.collide_rect(sprite, cube_red):
+            elif pygame.sprite.spritecollideany(sprite, sprites_) or pygame.sprite.collide_rect(sprite, moving_cube):
                 self.fires_list.remove(elem)
             else:
                 pygame.draw.circle(image, pygame.Color("red"),
@@ -464,9 +481,9 @@ class GroundTexture(pygame.sprite.Sprite):
 
 
 class Cube(pygame.sprite.Sprite):
-    def __init__(self, width, height, x, y, image=DICT_IMAGES['box'], color=None, *groups: AbstractGroup):
+    def __init__(self, width, height, x, y, image=DICT_IMAGES['box'], type=None, *groups: AbstractGroup):
         super().__init__(all_sprites, *groups)
-        self.image = image if color is None else DICT_IMAGES['stone_block']
+        self.image = image if type is None else DICT_IMAGES['stone_block']
         self.rect = self.image.get_rect()
         self.mask = pygame.mask.from_surface(self.image)
         self.rect.x = x
@@ -488,7 +505,7 @@ class Cube(pygame.sprite.Sprite):
         self.rect.y += move_y
 
 
-cube_red = None
+moving_cube = None
 
 
 class Border(pygame.sprite.Sprite):
@@ -517,6 +534,7 @@ class Border(pygame.sprite.Sprite):
 
 ak47 = Gun('gun.png')
 
+
 class Camera:
     # зададим начальный сдвиг камеры
     def __init__(self):
@@ -538,7 +556,7 @@ class Camera:
 
 
 def init_frames():
-    global hero_main_frames, cube_red, hero
+    global hero_main_frames, moving_cube, hero
     for i in range(1, 7):
         hero_main_frames.append(load_image(rf'walk\{i}.png'))
 
@@ -574,12 +592,18 @@ def init_frames():
                 enemies.append((x, y))
             elif world[row][col] == 4:
                 hero_l.append((x, y))
-            elif world[row][col] == 5 or world[row][col] == 6:
+            elif world[row][col] == 5 or world[row][col] == 6 or world[row][col] == 8:
                 ground.append((x, y, world[row][col]))
 
     for elem in ground:
+        image = DICT_IMAGES['ground_sand']
+        if elem[2] == 6:
+            image = DICT_IMAGES['ground_stone']
+        elif elem[2] == 8:
+            image = DICT_IMAGES['branch']
+
         cube = Cube(width=50, height=50, x=elem[0], y=elem[1],
-                    image=DICT_IMAGES['ground_stone'] if elem[2] == 6 else DICT_IMAGES['ground_sand'])
+                    image=image)
         sprites.add(cube)
 
     for elem in hero_l:
@@ -604,9 +628,9 @@ def init_frames():
         unmoving_sprites.add(cube)
 
     for elem in cube_r:
-        cube_red = Cube(width=50, height=50, x=elem[0], y=elem[1], color='red')
-        sprites.add(cube_red)
-        unmoving_sprites.add(cube_red)
+        moving_cube = Cube(width=50, height=50, x=elem[0], y=elem[1], type='moving_cube')
+        sprites.add(moving_cube)
+        unmoving_sprites.add(moving_cube)
 
 
 def game_end():
@@ -630,6 +654,7 @@ def print_info():
                                                      text.get_width() + 120, 20))
     pygame.draw.rect(SCREEN, pygame.Color('green'), (WIDTH // 2, HEIGHT - text.get_height() + 4, abs(hero.health), 10))
     SCREEN.blit(text, (text_x, text_y))
+
 
 def main_action():
     running = True
@@ -716,7 +741,7 @@ def main_action():
         ground_sprites.draw(SCREEN)
         sprites.draw(SCREEN)
         enemy_sprites.draw(SCREEN)
-        sprites.update(hero, cube_red, sprites_, enemy_sprites)
+        sprites.update(hero, moving_cube, sprites_, enemy_sprites)
         enemy_sprites.update(camera)
         for elem in firesList:
             sX = math.cos(elem[0]) * 30
@@ -758,7 +783,7 @@ def main_action():
                 firesList.remove(elem)
             elif pygame.sprite.spritecollideany(sprite, horizontal_borders) or pygame.sprite.spritecollideany(sprite, vertical_borders):
                 firesList.remove(elem)
-            elif pygame.sprite.spritecollideany(sprite, sprites_) or pygame.sprite.collide_rect(sprite, cube_red):
+            elif pygame.sprite.spritecollideany(sprite, sprites_) or pygame.sprite.collide_rect(sprite, moving_cube):
                 firesList.remove(elem)
             else:
                 pygame.draw.circle(image, pygame.Color("orange"),
