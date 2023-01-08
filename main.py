@@ -633,26 +633,60 @@ def init_frames():
         unmoving_sprites.add(moving_cube)
 
 
-def game_end():
-    font = pygame.font.Font(None, 50)
-    text = font.render("YOU LOSE. CONTINUE?", True, (100, 255, 100))
-    text_x = WIDTH // 2 - text.get_width() // 2
-    text_y = HEIGHT // 2 - text.get_height() // 2
-    text_w = text.get_width()
-    text_h = text.get_height()
+def print_text(text, color, font, x=None, y=None, center=False):
+    font = pygame.font.Font(None, font)
+    text = font.render(text, True, color)
+    if x is None and y is None:
+        text_x = WIDTH // 2 - text.get_width() // 2
+        text_y = HEIGHT // 2 - text.get_height() // 2
+    elif not center:
+        text_x = x
+        text_y = y
+    else:
+        text_x = WIDTH // 2 - text.get_width() // 2 - x
+        text_y = HEIGHT // 2 - text.get_height() // 2 - y
     SCREEN.blit(text, (text_x, text_y))
+
+
+def terminate():
+    pygame.quit()
+    sys.exit()
+
+
+def pause():
+    paused = True
+    while paused:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+                paused = False
+
+        print_text("PAUSED.", (76, 187, 23), 75, x=0, y=30, center=True)
+        print_text("PRESS ENTER TO CONTINUE", (189, 218, 87), 50, x=0, y=-30, center=True)
+        pygame.display.flip()
+        CLOCK.tick(FPS)
+
+
+def game_end():
+    print_text("YOU LOSE. CONTINUE?", (100, 255, 100), 50)
+    # font = pygame.font.Font(None, 50)
+    # text = font.render("YOU LOSE. CONTINUE?", True, (100, 255, 100))
+    # text_x = WIDTH // 2 - text.get_width() // 2
+    # text_y = HEIGHT // 2 - text.get_height() // 2
+    # SCREEN.blit(text, (text_x, text_y))
 
 
 def print_info():
     font = pygame.font.SysFont('monserat', 25)
-    text = font.render("Hero health:", True, pygame.Color('green'))
-    text_x = WIDTH // 2 - text.get_width() // 2 - 50
+    text = font.render("Hero health:", True, pygame.Color(127,255,0))
+    text_x = WIDTH // 2 - text.get_width() // 2 - 55
     text_y = HEIGHT - text.get_height()
     text_w = text.get_width()
     text_h = text.get_height()
-    pygame.draw.rect(SCREEN, pygame.Color('black'), (WIDTH // 2 - text.get_width() // 2 - 60, HEIGHT - 20,
+    pygame.draw.rect(SCREEN, pygame.Color('black'), (WIDTH // 2 - text.get_width() // 2 - 62, HEIGHT - 20,
                                                      text.get_width() + 120, 20))
-    pygame.draw.rect(SCREEN, pygame.Color('green'), (WIDTH // 2, HEIGHT - text.get_height() + 4, abs(hero.health), 10))
+    pygame.draw.rect(SCREEN, pygame.Color(127,255,0), (WIDTH // 2, HEIGHT - text.get_height() + 4, abs(hero.health), 10))
     SCREEN.blit(text, (text_x, text_y))
 
 
@@ -690,6 +724,8 @@ def main_action():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                pause()
             if event.type == pygame.MOUSEMOTION:
                 mousePos['x'], mousePos['y'] = pygame.mouse.get_pos()
                 x = hero.rect.x + hero.image.get_rect()[2] // 2
@@ -793,7 +829,7 @@ def main_action():
         print_info()
         CLOCK.tick(FPS)
         pygame.display.flip()
-    pygame.quit()
+    terminate()
 
 
 main_action()
