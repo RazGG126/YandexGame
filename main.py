@@ -51,6 +51,7 @@ DICT_IMAGES = {
     'box': load_image('box.jpg'),
     'ground_sand': load_image('ground_sand.png'),
     'ground_stone': load_image('ground_stone.jpg'),
+    'bush': load_image('bush_mine.png')
 }
 
 
@@ -274,6 +275,7 @@ class Enemy(pygame.sprite.Sprite):
                     self.rect.y += self.move_y_v
                     if pygame.sprite.spritecollideany(self, unmoving_sprites):
                         self.rect.y -= self.move_y_v
+                        self.move_y_v = -self.move_y_v
                     self.stop_distance = 0
                 else:
                     self.stop_distance = self.d
@@ -285,6 +287,7 @@ class Enemy(pygame.sprite.Sprite):
                     self.rect.x += self.move_x_v
                     if pygame.sprite.spritecollideany(self, unmoving_sprites):
                         self.rect.x -= self.move_x_v
+                        self.move_x_v = -self.move_x_v
                     self.stop_distance = 0
                 else:
                     self.stop_distance = self.d
@@ -563,8 +566,8 @@ def init_frames():
         for col in range(len(world[row])):
             x, y = col * 10, row * 10
 
-            if world[row][col] == 1:
-                boxes.append((x, y))
+            if world[row][col] == 1 or world[row][col] == 7:
+                boxes.append((x, y, world[row][col]))
             elif world[row][col] == 2:
                 cube_r.append((x, y))
             elif world[row][col] == 3:
@@ -574,18 +577,28 @@ def init_frames():
             elif world[row][col] == 5 or world[row][col] == 6:
                 ground.append((x, y, world[row][col]))
 
-    for elem in enemies:
-        enemy = Enemy(elem[0], elem[1], gun=ak47,
-                      frames=hero_main_frames, hero=None)
-        enemy_sprites.add(enemy)
-
     for elem in ground:
         cube = Cube(width=50, height=50, x=elem[0], y=elem[1],
                     image=DICT_IMAGES['ground_stone'] if elem[2] == 6 else DICT_IMAGES['ground_sand'])
         sprites.add(cube)
 
+    for elem in hero_l:
+        hero = HeroMain(elem[0], elem[1], gun=ak47, frames=hero_main_frames)
+        sprites.add(hero)
+
+    for elem in enemies:
+        enemy = Enemy(elem[0], elem[1], gun=ak47,
+                      frames=hero_main_frames, hero=hero)
+        enemy_sprites.add(enemy)
+
+    # for elem in ground:
+    #     cube = Cube(width=50, height=50, x=elem[0], y=elem[1],
+    #                 image=DICT_IMAGES['ground_stone'] if elem[2] == 6 else DICT_IMAGES['ground_sand'])
+    #     sprites.add(cube)
+
     for elem in boxes:
-        cube = Cube(width=50, height=50, x=elem[0], y=elem[1])
+        cube = Cube(width=50, height=50, x=elem[0], y=elem[1],
+                    image=DICT_IMAGES['box'] if elem[2] == 1 else DICT_IMAGES['bush'])
         sprites.add(cube)
         sprites_.add(cube)
         unmoving_sprites.add(cube)
@@ -595,9 +608,6 @@ def init_frames():
         sprites.add(cube_red)
         unmoving_sprites.add(cube_red)
 
-    for elem in hero_l:
-        hero = HeroMain(elem[0], elem[1], gun=ak47, frames=hero_main_frames)
-        sprites.add(hero)
 
 def game_end():
     font = pygame.font.Font(None, 50)
@@ -607,6 +617,7 @@ def game_end():
     text_w = text.get_width()
     text_h = text.get_height()
     SCREEN.blit(text, (text_x, text_y))
+
 
 def print_info():
     font = pygame.font.SysFont('monserat', 25)
@@ -639,8 +650,8 @@ def main_action():
     # cube_new2 = Cube(width=50, height=50,  x=100, y=340)
     # cube_new3 = Cube(width=50, height=50,  x=900, y=100)
 
-    for sprite in enemy_sprites:
-        sprite.hero = hero
+    # for sprite in enemy_sprites:
+    #     sprite.hero = hero
     # for i in range(1):
     #     enemy = Enemy(100 * random.randint(1, 10), 100 * random.randint(1, 6),gun=ak47, frames=hero_main_frames, hero=hero)
     #     enemy_sprites.add(enemy)
@@ -736,7 +747,7 @@ def main_action():
             sprite.rect.x = elem[1]
             sprite.rect.y = elem[2]
 
-            if (x_ ** 2 + y_ ** 2) ** 0.5 > 280:
+            if (x_ ** 2 + y_ ** 2) ** 0.5 > 230:
                 firesList.remove(elem)
             elif pygame.sprite.spritecollideany(sprite, enemy_sprites):
                 for person in pygame.sprite.spritecollide(sprite, enemy_sprites, False):
