@@ -289,8 +289,13 @@ class Enemy(pygame.sprite.Sprite):
                 else:
                     self.stop_distance = self.d
         self.update_frame()
+        self.render_health()
         self.move_x = 0
         self.move_y = 0
+
+    def render_health(self):
+        pygame.draw.rect(SCREEN, pygame.Color('red'),
+                         (self.rect.x, self.rect.y - 10, abs(self.health) / (100 / 46), 10))
 
     def move_gun(self, camera):
 
@@ -594,6 +599,26 @@ def init_frames():
         hero = HeroMain(elem[0], elem[1], gun=ak47, frames=hero_main_frames)
         sprites.add(hero)
 
+def game_end():
+    font = pygame.font.Font(None, 50)
+    text = font.render("YOU LOSE. CONTINUE?", True, (100, 255, 100))
+    text_x = WIDTH // 2 - text.get_width() // 2
+    text_y = HEIGHT // 2 - text.get_height() // 2
+    text_w = text.get_width()
+    text_h = text.get_height()
+    SCREEN.blit(text, (text_x, text_y))
+
+def print_info():
+    font = pygame.font.SysFont('monserat', 25)
+    text = font.render("Hero health:", True, pygame.Color('green'))
+    text_x = WIDTH // 2 - text.get_width() // 2 - 50
+    text_y = HEIGHT - text.get_height()
+    text_w = text.get_width()
+    text_h = text.get_height()
+    pygame.draw.rect(SCREEN, pygame.Color('black'), (WIDTH // 2 - text.get_width() // 2 - 60, HEIGHT - 20,
+                                                     text.get_width() + 120, 20))
+    pygame.draw.rect(SCREEN, pygame.Color('green'), (WIDTH // 2, HEIGHT - text.get_height() + 4, abs(hero.health), 10))
+    SCREEN.blit(text, (text_x, text_y))
 
 def main_action():
     running = True
@@ -729,7 +754,7 @@ def main_action():
                                (5, 5), 5)
             if (x_ ** 2 + y_ ** 2) ** 0.5 > 50:
                 SCREEN.blit(image, [elem[1], elem[2]])
-
+        print_info()
         CLOCK.tick(FPS)
         pygame.display.flip()
     pygame.quit()
