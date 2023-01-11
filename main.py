@@ -115,6 +115,7 @@ class HeroMain(pygame.sprite.Sprite):
         self.health = 100
 
         self.catch_cat = False
+        self.on_the_luke = False
 
         self.moving = False
         self.moving_left = False
@@ -237,10 +238,13 @@ class HeroMain(pygame.sprite.Sprite):
             cat.kill()
             self.catch_cat = True
         if pygame.sprite.collide_rect(self, luke):
+            self.on_the_luke = True
             if self.catch_cat:
                 print('True')
             else:
                 print('False')
+        else:
+            self.on_the_luke = False
         self.move_x = 0
         self.move_y = 0
         cube.moving = False
@@ -794,6 +798,10 @@ def main_action():
         #     win = True
         #     running = False
         keys = pygame.key.get_pressed()
+        if keys[pygame.K_RETURN]:
+            if hero.catch_cat and hero.on_the_luke:
+                win = True
+                running = False
         if keys[pygame.K_a]:
             hero.moving = True
             hero.moving_left = True
