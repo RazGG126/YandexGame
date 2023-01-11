@@ -26,6 +26,7 @@ unmoving_sprites = pygame.sprite.Group()
 mousePos = {'x': 0, 'y': 0}
 hero = None
 cat = None
+luke = None
 
 
 def load_image(name, colorkey=None):
@@ -54,6 +55,7 @@ DICT_IMAGES = {
     'ground_stone': load_image('ground_stone.jpg'),
     'bush': load_image('bush_mine.png'),
     'branch': load_image('branch.png'),
+    'luke': load_image('luke.png')
 }
 
 
@@ -186,7 +188,7 @@ class HeroMain(pygame.sprite.Sprite):
             # self.gun.rect.x = self.rect.x
             # self.gun.rect.y = self.rect.y + self.image.get_size()[1] // 2
 
-    def update(self, cube, cube_2, sprites, enemy_sprites, cat):
+    def update(self, cube, cube_2, sprites, enemy_sprites, cat, luke):
         self.move_gun()
         self.rect.x += self.move_x
         self.rect.y += self.move_y
@@ -234,6 +236,11 @@ class HeroMain(pygame.sprite.Sprite):
         if pygame.sprite.collide_mask(self, cat):
             cat.kill()
             self.catch_cat = True
+        if pygame.sprite.collide_rect(self, luke):
+            if self.catch_cat:
+                print('True')
+            else:
+                print('False')
         self.move_x = 0
         self.move_y = 0
         cube.moving = False
@@ -576,7 +583,7 @@ class Camera:
 
 
 def init_frames():
-    global hero_main_frames, moving_cube, hero, cat
+    global hero_main_frames, moving_cube, hero, cat, luke
     for i in range(1, 7):
         hero_main_frames.append(load_image(rf'walk\{i}.png'))
 
@@ -590,7 +597,10 @@ def init_frames():
         line = line.strip()
         arr = []
         for elem in line:
-            arr.append(int(elem))
+            try:
+                arr.append(int(elem))
+            except ValueError:
+                arr.append(elem)
         world.append(arr)
     file.close()
 
@@ -600,6 +610,7 @@ def init_frames():
     enemies = []
     hero_l = []
     cat_l = []
+    luke_l = []
 
     for row in range(len(world)):
         for col in range(len(world[row])):
@@ -617,6 +628,8 @@ def init_frames():
                 ground.append((x, y, world[row][col]))
             elif world[row][col] == 9:
                 cat_l.append((x, y))
+            elif world[row][col] == 'l':
+                luke_l.append((x, y))
 
     for elem in ground:
         image = DICT_IMAGES['ground_sand']
@@ -628,6 +641,10 @@ def init_frames():
         cube = Cube(width=50, height=50, x=elem[0], y=elem[1],
                     image=image)
         sprites.add(cube)
+
+    for elem in luke_l:
+        luke = Cube(width=80, height=80, x=elem[0], y=elem[1], image=DICT_IMAGES['luke'])
+        sprites.add(luke)
 
     for elem in cat_l:
         cat = Cat(elem[0], elem[1], frames=DICT_IMAGES['cat'])
@@ -797,7 +814,7 @@ def main_action():
         ground_sprites.draw(SCREEN)
         sprites.draw(SCREEN)
         enemy_sprites.draw(SCREEN)
-        sprites.update(hero, moving_cube, sprites_, enemy_sprites, cat)
+        sprites.update(hero, moving_cube, sprites_, enemy_sprites, cat, luke)
         enemy_sprites.update(camera)
         for elem in firesList:
             sX = math.cos(elem[0]) * 30
