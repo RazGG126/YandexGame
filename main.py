@@ -67,7 +67,7 @@ class Gun(pygame.sprite.Sprite):
 
 class Cat(pygame.sprite.Sprite):
     def __init__(self,x, y, frames, *groups: AbstractGroup):
-        super().__init__(*groups)
+        super().__init__(all_sprites, *groups)
         self.frames = frames
         self.cur_frame = 0
         self.image = self.frames[self.cur_frame]
@@ -76,8 +76,23 @@ class Cat(pygame.sprite.Sprite):
         self.rect.y = y
         self.speed_x = 4
         self.speed_y = 4
+        self.moving_left = True
+        self.moving_right = False
 
         self.stand = True
+
+    def update_frame(self):
+        self.cur_frame += 1
+        if self.cur_frame > 15:
+            self.cur_frame = 0
+
+        if self.moving_left:
+            self.image = pygame.transform.flip(self.frames[self.cur_frame // 4], True, False)
+        elif self.moving_right:
+            self.image = self.frames[self.cur_frame // 4]
+
+    def update(self, *args):
+        self.update_frame()
 
 
 class HeroMain(pygame.sprite.Sprite):
@@ -96,6 +111,8 @@ class HeroMain(pygame.sprite.Sprite):
         self.heavy = 0
 
         self.health = 100
+
+        self.catch_cat = False
 
         self.moving = False
         self.moving_left = False
@@ -169,7 +186,7 @@ class HeroMain(pygame.sprite.Sprite):
             # self.gun.rect.x = self.rect.x
             # self.gun.rect.y = self.rect.y + self.image.get_size()[1] // 2
 
-    def update(self, cube, cube_2, sprites, enemy_sprites):
+    def update(self, cube, cube_2, sprites, enemy_sprites, cat):
         self.move_gun()
         self.rect.x += self.move_x
         self.rect.y += self.move_y
@@ -214,6 +231,9 @@ class HeroMain(pygame.sprite.Sprite):
             self.update_frame()
         else:
             self.update_frame(True)
+        if pygame.sprite.collide_mask(self, cat):
+            cat.kill()
+            self.catch_cat = True
         self.move_x = 0
         self.move_y = 0
         cube.moving = False
@@ -556,7 +576,7 @@ class Camera:
 
 
 def init_frames():
-    global hero_main_frames, moving_cube, hero
+    global hero_main_frames, moving_cube, hero, cat
     for i in range(1, 7):
         hero_main_frames.append(load_image(rf'walk\{i}.png'))
 
@@ -579,6 +599,7 @@ def init_frames():
     cube_r = []
     enemies = []
     hero_l = []
+    cat_l = []
 
     for row in range(len(world)):
         for col in range(len(world[row])):
@@ -594,6 +615,8 @@ def init_frames():
                 hero_l.append((x, y))
             elif world[row][col] == 5 or world[row][col] == 6 or world[row][col] == 8:
                 ground.append((x, y, world[row][col]))
+            elif world[row][col] == 9:
+                cat_l.append((x, y))
 
     for elem in ground:
         image = DICT_IMAGES['ground_sand']
@@ -605,6 +628,10 @@ def init_frames():
         cube = Cube(width=50, height=50, x=elem[0], y=elem[1],
                     image=image)
         sprites.add(cube)
+
+    for elem in cat_l:
+        cat = Cat(elem[0], elem[1], frames=DICT_IMAGES['cat'])
+        sprites.add(cat)
 
     for elem in hero_l:
         hero = HeroMain(elem[0], elem[1], gun=ak47, frames=hero_main_frames)
@@ -746,9 +773,9 @@ def main_action():
         for sprite in all_sprites:
             camera.apply(sprite)
         #
-        if len(enemy_sprites) == 0:
-            win = True
-            running = False
+        # if len(enemy_sprites) == 0:
+        #     win = True
+        #     running = False
         keys = pygame.key.get_pressed()
         if keys[pygame.K_a]:
             hero.moving = True
@@ -770,7 +797,7 @@ def main_action():
         ground_sprites.draw(SCREEN)
         sprites.draw(SCREEN)
         enemy_sprites.draw(SCREEN)
-        sprites.update(hero, moving_cube, sprites_, enemy_sprites)
+        sprites.update(hero, moving_cube, sprites_, enemy_sprites, cat)
         enemy_sprites.update(camera)
         for elem in firesList:
             sX = math.cos(elem[0]) * 30
@@ -806,7 +833,7 @@ def main_action():
             elif pygame.sprite.spritecollideany(sprite, enemy_sprites):
                 lst = pygame.sprite.spritecollide(sprite, enemy_sprites, False)
                 for person in pygame.sprite.spritecollide(sprite, enemy_sprites, False):
-                    person.health -= 50
+                    person.health -= 100
                     if person.health <= 0:
                         person.kill()
                         print('enemy died')

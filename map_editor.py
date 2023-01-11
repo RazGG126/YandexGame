@@ -76,6 +76,10 @@ while running:
         number = 7
     elif keys[pygame.K_z]:
         number = 8
+    elif keys[pygame.K_c]:
+        number = 9
+    elif keys[pygame.K_c]:
+        number = 'l'
 
     mousePX, mousePY = pygame.mouse.get_pos()
     b1, b2, b3 = pygame.mouse.get_pressed()
@@ -106,6 +110,10 @@ while running:
                 pygame.draw.rect(screen, pygame.Color(68, 148, 74), (x, y, cell_size * 5, cell_size * 5))
             elif world[row][col] == 8:
                 pygame.draw.rect(screen, pygame.Color('brown'), (x, y, cell_size * 5, cell_size * 5))
+            elif world[row][col] == 9:
+                pygame.draw.rect(screen, pygame.Color('white'), (x, y, cell_size * 7, cell_size * 6))
+            # elif world[row][col] == 'l':
+            #     pygame.draw.rect(screen, pygame.Color('white'), (x, y, cell_size * 7, cell_size * 6))
             else:
                 pygame.draw.rect(screen, pygame.Color('gray'), (x, y, cell_size, cell_size), 1)
 
