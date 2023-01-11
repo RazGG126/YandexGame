@@ -547,7 +547,7 @@ class Camera:
             obj.rect.x += self.dx
             obj.rect.y += self.dy
         else:
-            return x  + self.dx, y + self.dy
+            return x + self.dx, y + self.dy
 
     # позиционировать камеру на объекте target
     def update(self, target):
@@ -662,19 +662,10 @@ def pause():
             if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
                 paused = False
 
-        print_text("PAUSED.", (76, 187, 23), 75, x=0, y=30, center=True)
-        print_text("PRESS ENTER TO CONTINUE", (189, 218, 87), 50, x=0, y=-30, center=True)
+        print_text("PAUSED.", (243, 165, 5), 75, x=0, y=30, center=True)
+        print_text("PRESS ENTER TO CONTINUE", (255, 202, 134), 50, x=0, y=-30, center=True)
         pygame.display.flip()
         CLOCK.tick(FPS)
-
-
-def game_end():
-    print_text("YOU LOSE. CONTINUE?", (100, 255, 100), 50)
-    # font = pygame.font.Font(None, 50)
-    # text = font.render("YOU LOSE. CONTINUE?", True, (100, 255, 100))
-    # text_x = WIDTH // 2 - text.get_width() // 2
-    # text_y = HEIGHT // 2 - text.get_height() // 2
-    # SCREEN.blit(text, (text_x, text_y))
 
 
 def print_info():
@@ -704,6 +695,7 @@ def main_action():
 
     firesList = []
 
+    win = False
 
     # cube_new = Cube(width=50, height=50,  x=500, y=300)
     # cube_new2 = Cube(width=50, height=50,  x=100, y=340)
@@ -723,9 +715,7 @@ def main_action():
         SCREEN.fill(pygame.Color('black'))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                running = False
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                pause()
+                terminate()
             if event.type == pygame.MOUSEMOTION:
                 mousePos['x'], mousePos['y'] = pygame.mouse.get_pos()
                 x = hero.rect.x + hero.image.get_rect()[2] // 2
@@ -756,21 +746,24 @@ def main_action():
         for sprite in all_sprites:
             camera.apply(sprite)
         #
+        if len(enemy_sprites) == 0:
+            win = True
+            running = False
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_LEFT]:
+        if keys[pygame.K_a]:
             hero.moving = True
             hero.moving_left = True
             hero.moving_right = False
             hero.move_x -= hero.speed_x
-        if keys[pygame.K_RIGHT]:
+        if keys[pygame.K_d]:
             hero.moving = True
             hero.moving_left = False
             hero.moving_right = True
             hero.move_x += hero.speed_x
-        if keys[pygame.K_UP]:
+        if keys[pygame.K_w]:
             hero.moving = True
             hero.move_y -= hero.speed_y
-        if keys[pygame.K_DOWN]:
+        if keys[pygame.K_s]:
             hero.moving = True
             hero.move_y += hero.speed_y
 
@@ -811,8 +804,9 @@ def main_action():
             if (x_ ** 2 + y_ ** 2) ** 0.5 > 230:
                 firesList.remove(elem)
             elif pygame.sprite.spritecollideany(sprite, enemy_sprites):
+                lst = pygame.sprite.spritecollide(sprite, enemy_sprites, False)
                 for person in pygame.sprite.spritecollide(sprite, enemy_sprites, False):
-                    person.health -= 10
+                    person.health -= 50
                     if person.health <= 0:
                         person.kill()
                         print('enemy died')
@@ -827,9 +821,46 @@ def main_action():
             if (x_ ** 2 + y_ ** 2) ** 0.5 > 50:
                 SCREEN.blit(image, [elem[1], elem[2]])
         print_info()
+        if keys[pygame.K_ESCAPE]:
+            pause()
+        if hero.health <= 0:
+            running = False
         CLOCK.tick(FPS)
         pygame.display.flip()
-    terminate()
+    if win:
+        return game_over(True)
+    return game_over()
 
 
-main_action()
+def game_over(value=False):
+    stopped = True
+    while stopped:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+                return True
+        if not value:
+            print_text("YOU LOSE.", (255, 0, 51), 75, x=0, y=30, center=True)
+            print_text("PRESS ENTER TO PLAY AGAIN", (217, 80, 48), 50, x=0, y=-30, center=True)
+        else:
+            print_text("YOU WIN.", (76, 187, 23), 75, x=0, y=30, center=True)
+            print_text("PRESS ENTER TO PLAY AGAIN", (189, 218, 87), 50, x=0, y=-30, center=True)
+
+        pygame.display.flip()
+        CLOCK.tick(FPS)
+
+
+while main_action():
+    hero_main_frames = []
+    ground_sprites = pygame.sprite.Group()
+    enemy_sprites = pygame.sprite.Group()
+    all_sprites = pygame.sprite.Group()
+    vertical_borders = pygame.sprite.Group()
+    horizontal_borders = pygame.sprite.Group()
+    sprites = pygame.sprite.Group()
+    sprites_ = pygame.sprite.Group()
+    unmoving_sprites = pygame.sprite.Group()
+    mousePos = {'x': 0, 'y': 0}
+    ak47 = Gun('gun.png')
+terminate()
