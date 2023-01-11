@@ -566,6 +566,30 @@ class Border(pygame.sprite.Sprite):
 ak47 = Gun('gun.png')
 
 
+class Button:
+    def __init__(self, width, height, inactive_color, active_color):
+        self.width = width
+        self.height = height
+        self.inactive_color = inactive_color
+        self.active_color = active_color
+
+    def draw(self, x, y, message, dl_x, dl_y, action=None):
+        mouse = pygame.mouse.get_pos()
+        click = pygame.mouse.get_pressed()
+
+        if x < mouse[0] < x + self.width and y < mouse[1] < y + self.height:
+            pygame.draw.rect(SCREEN, self.active_color, (x, y, self.width, self.height))
+            print_text(text=message, color=self.inactive_color, x=x + 10, y=y + 10, font=30)
+            if click[0] == 1 and action is not None:
+                action()
+
+        else:
+            pygame.draw.rect(SCREEN, self.inactive_color, (x, y, self.width, self.height))
+            print_text(text=message, color=self.active_color, x=x + dl_x, y=y + dl_y, font=30)
+
+
+
+
 class Camera:
     # зададим начальный сдвиг камеры
     def __init__(self):
@@ -703,6 +727,7 @@ def terminate():
 
 def pause():
     paused = True
+    button = Button(100, 50, active_color=(255, 255, 255), inactive_color=(28, 172, 120))
     while paused:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -712,6 +737,7 @@ def pause():
 
         print_text("PAUSED.", (243, 165, 5), 75, x=0, y=30, center=True)
         print_text("PRESS ENTER TO CONTINUE", (255, 202, 134), 50, x=0, y=-30, center=True)
+        button.draw(x=WIDTH // 2 - 50, y=HEIGHT // 2 + 100, message='МЕНЮ', dl_x=15, dl_y=15)
         pygame.display.flip()
         CLOCK.tick(FPS)
 
@@ -858,7 +884,7 @@ def main_action():
             elif pygame.sprite.spritecollideany(sprite, enemy_sprites):
                 lst = pygame.sprite.spritecollide(sprite, enemy_sprites, False)
                 for person in pygame.sprite.spritecollide(sprite, enemy_sprites, False):
-                    person.health -= 100
+                    person.health -= 10
                     if person.health <= 0:
                         person.kill()
                         print('enemy died')
@@ -886,6 +912,7 @@ def main_action():
 
 def game_over(value=False):
     stopped = True
+    button = Button(100, 50, active_color=(255, 255, 255), inactive_color=(180, 76, 67))
     while stopped:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -895,9 +922,11 @@ def game_over(value=False):
         if not value:
             print_text("YOU LOSE.", (255, 0, 51), 75, x=0, y=30, center=True)
             print_text("PRESS ENTER TO PLAY AGAIN", (217, 80, 48), 50, x=0, y=-30, center=True)
+            button.draw(x=WIDTH // 2 - 50, y=HEIGHT // 2 + 100, message='МЕНЮ', dl_x=15, dl_y=15)
         else:
             print_text("YOU WIN.", (76, 187, 23), 75, x=0, y=30, center=True)
             print_text("PRESS ENTER TO PLAY AGAIN", (189, 218, 87), 50, x=0, y=-30, center=True)
+            button.draw(x=WIDTH // 2 - 50, y=HEIGHT // 2 + 100, message='МЕНЮ', dl_x=15, dl_y=15)
 
         pygame.display.flip()
         CLOCK.tick(FPS)
