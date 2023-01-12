@@ -46,6 +46,7 @@ def load_image(name, colorkey=None):
 
 
 DICT_IMAGES = {
+    'menu_bg': load_image('menu_bg.jpg'),
     'ground_ender': load_image(r'ground\ender_block.png'),
     'enemy_red': load_image(r'enemy_red.png'),
     'stone_block': load_image(r'stone_block.png'),
@@ -573,21 +574,19 @@ class Button:
         self.inactive_color = inactive_color
         self.active_color = active_color
 
-    def draw(self, x, y, message, dl_x, dl_y, action=None):
+    def draw(self, x, y, message, dl_x=10, dl_y=10, action=None, font_size=30):
         mouse = pygame.mouse.get_pos()
         click = pygame.mouse.get_pressed()
 
         if x < mouse[0] < x + self.width and y < mouse[1] < y + self.height:
             pygame.draw.rect(SCREEN, self.active_color, (x, y, self.width, self.height))
-            print_text(text=message, color=self.inactive_color, x=x + 10, y=y + 10, font=30)
+            print_text(text=message, color=self.inactive_color, x=x + 10, y=y + 10, font=font_size)
             if click[0] == 1 and action is not None:
                 action()
 
         else:
             pygame.draw.rect(SCREEN, self.inactive_color, (x, y, self.width, self.height))
-            print_text(text=message, color=self.active_color, x=x + dl_x, y=y + dl_y, font=30)
-
-
+            print_text(text=message, color=self.active_color, x=x + dl_x, y=y + dl_y, font=font_size)
 
 
 class Camera:
@@ -727,17 +726,19 @@ def terminate():
 
 def pause():
     paused = True
-    button = Button(100, 50, active_color=(255, 255, 255), inactive_color=(28, 172, 120))
+    button = Button(100, 50, active_color=(255, 255, 255), inactive_color=(229, 190, 1))
     while paused:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
             if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
                 paused = False
-
+        # 21,23,25
+        #27, 17, 22
+        pygame.draw.rect(SCREEN, (21, 23, 25), (WIDTH // 2 - 300, HEIGHT // 2 - 80, 600, 230))
         print_text("PAUSED.", (243, 165, 5), 75, x=0, y=30, center=True)
         print_text("PRESS ENTER TO CONTINUE", (255, 202, 134), 50, x=0, y=-30, center=True)
-        button.draw(x=WIDTH // 2 - 50, y=HEIGHT // 2 + 100, message='МЕНЮ', dl_x=15, dl_y=15)
+        button.draw(x=WIDTH // 2 - 50, y=HEIGHT // 2 + 75, message='МЕНЮ', action=show_menu, dl_x=15, dl_y=15)
         pygame.display.flip()
         CLOCK.tick(FPS)
 
@@ -828,6 +829,9 @@ def main_action():
             if hero.catch_cat and hero.on_the_luke:
                 win = True
                 running = False
+        if keys[pygame.K_SPACE]:
+            win = True
+            running = False
         if keys[pygame.K_a]:
             hero.moving = True
             hero.moving_left = True
@@ -906,33 +910,60 @@ def main_action():
         CLOCK.tick(FPS)
         pygame.display.flip()
     if win:
-        return game_over(True)
-    return game_over()
+        return game_over_win(True)
+    return game_over_win()
 
 
-def game_over(value=False):
+def game_over_win(value=False):
     stopped = True
-    button = Button(100, 50, active_color=(255, 255, 255), inactive_color=(180, 76, 67))
+    button_lose = Button(100, 50, active_color=(255, 255, 255), inactive_color=(180, 76, 67))
+    button_win = Button(100, 50, active_color=(255, 255, 255), inactive_color=(76, 187, 23))
     while stopped:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
             if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
                 return True
+        pygame.draw.rect(SCREEN, (21, 23, 25), (WIDTH // 2 - 300, HEIGHT // 2 - 80, 600, 230))
         if not value:
             print_text("YOU LOSE.", (255, 0, 51), 75, x=0, y=30, center=True)
             print_text("PRESS ENTER TO PLAY AGAIN", (217, 80, 48), 50, x=0, y=-30, center=True)
-            button.draw(x=WIDTH // 2 - 50, y=HEIGHT // 2 + 100, message='МЕНЮ', dl_x=15, dl_y=15)
+            button_lose.draw(x=WIDTH // 2 - 50, y=HEIGHT // 2 + 75, message='МЕНЮ', action=show_menu, dl_x=15, dl_y=15)
         else:
-            print_text("YOU WIN.", (76, 187, 23), 75, x=0, y=30, center=True)
+            #124, 252, 0
+            print_text("YOU WIN.", (124, 252, 0), 75, x=0, y=30, center=True)
             print_text("PRESS ENTER TO PLAY AGAIN", (189, 218, 87), 50, x=0, y=-30, center=True)
-            button.draw(x=WIDTH // 2 - 50, y=HEIGHT // 2 + 100, message='МЕНЮ', dl_x=15, dl_y=15)
+            button_win.draw(x=WIDTH // 2 - 50, y=HEIGHT // 2 + 75, message='МЕНЮ', action=show_menu, dl_x=15, dl_y=15)
 
         pygame.display.flip()
         CLOCK.tick(FPS)
 
 
-while main_action():
+def show_menu():
+    menu_background = DICT_IMAGES['menu_bg']
+
+    btn = Button(200, 100, active_color=(255, 255, 255), inactive_color=(0, 0, 0))
+    settings_btn = Button(150, 50, active_color=(255, 255, 255), inactive_color=(0, 0, 0))
+    dl = 30
+    show = True
+    while show:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+
+        SCREEN.blit(menu_background, (0, 0))
+        btn.draw(150, 80, dl_x=35, dl_y=25, message='PLAY.', action=start_game, font_size=70)
+        settings_btn.draw(175, 205, dl_x=25, dl_y=18, message='SETTINGS.', font_size=30)
+        settings_btn.draw(175, 280, dl_x=40, dl_y=18, message='STATА.', font_size=30)
+        settings_btn.draw(175, 355, dl_x=50, dl_y=18, message='EXIT.', action=terminate, font_size=30)
+        pygame.display.update()
+        CLOCK.tick(FPS)
+
+
+def reset():
+    global hero_main_frames, ground_sprites, \
+        enemy_sprites, all_sprites, vertical_borders, \
+        horizontal_borders, sprites, sprites_, unmoving_sprites, mousePos, ak47
     hero_main_frames = []
     ground_sprites = pygame.sprite.Group()
     enemy_sprites = pygame.sprite.Group()
@@ -944,4 +975,25 @@ while main_action():
     unmoving_sprites = pygame.sprite.Group()
     mousePos = {'x': 0, 'y': 0}
     ak47 = Gun('gun.png')
+#
+# def home_action():
+#     running = True
+#
+#     init_frames('home.txt')
+#
+#     Border(-50, 0, 2100, 0, 't')
+#     Border(-50, 2000, 2100, 2000, 'b')
+#     Border(0, 0, 0, 2100, 'l')
+#     Border(2000, 0, 2000, 2100, 'r')
+#
+#     camera = Camera()
+
+
+def start_game():
+    reset()
+    while main_action():
+        reset()
+
+
+show_menu()
 terminate()
