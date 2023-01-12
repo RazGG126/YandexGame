@@ -61,11 +61,16 @@ DICT_IMAGES = {
 
 
 class Gun(pygame.sprite.Sprite):
-    def __init__(self, gun_image, *groups: AbstractGroup):
+    def __init__(self, power, ammo, gun_image, *groups: AbstractGroup):
         super().__init__(*groups)
         self.gun_image = gun_image
         self.image = load_image(gun_image)
         self.rect = self.image.get_rect()
+        self.power = power
+        self.ammo = ammo
+        self.ammo_now = ammo
+        self.wait = 0
+        self.wait_max = 100
 
 
 class Cat(pygame.sprite.Sprite):
@@ -283,6 +288,11 @@ class Enemy(pygame.sprite.Sprite):
         self.move_y_v = 2
 
         self.gun = gun  # class
+        # self.gun.wait_max *= 10
+        # self.ammo_now = 5 # self.gun.ammo_now
+        # self.ammo = 5 # self.gun.ammo
+        # self.wait = 0
+        # self.wait_max = self.gun.wait_max
         self.gun_image = gun.image
 
         self.count = 0
@@ -303,7 +313,15 @@ class Enemy(pygame.sprite.Sprite):
         elif self.moving_right:
             self.image = self.frames[self.cur_frame // 4]
 
+    # def reload(self):
+    #     if self.ammo_now == 0:
+    #         self.wait += 1
+    #         if self.wait_max == self.wait:
+    #             self.ammo_now = self.ammo
+    #             self.wait = 0
+
     def update(self, camera):
+        # self.reload()
         self.move_gun(camera)
         if self.moving:
 
@@ -443,6 +461,8 @@ class Enemy(pygame.sprite.Sprite):
             self.count += 1
             if self.count % 15 == 0:
                 self.count = 0
+                # if self.ammo_now != 0:
+                #     self.ammo_now -= 1
                 self.fires_list.append(
                                 [
                                     math.atan2(y_2 - y,
@@ -453,6 +473,8 @@ class Enemy(pygame.sprite.Sprite):
                                     y
                                 ]
                             )
+                # else:
+                #     print(self.wait, 'Перезарядка')
         for x, elem in enumerate(self.fires_list):
             sX = math.cos(elem[0]) * 20
             sY = math.sin(elem[0]) * 20
@@ -485,7 +507,7 @@ class Enemy(pygame.sprite.Sprite):
             if (x_ ** 2 + y_ ** 2) ** 0.5 > 320:
                 self.fires_list.remove(elem)
             elif pygame.sprite.collide_rect(sprite, self.hero):
-                self.hero.health -= 10
+                self.hero.health -= max(self.gun.power - 5, 5)
                 print(f'Hero damaged: {self.hero.health}')
                 if self.hero.health <= 0:
                     print('hero died')
@@ -564,7 +586,7 @@ class Border(pygame.sprite.Sprite):
                 self.rect = pygame.Rect(x1, y1 + 60, x2 - x1, 50)
 
 
-ak47 = Gun('gun.png')
+ak47 = Gun(power=15, ammo=30, gun_image='gun.png')
 
 
 class Button:
@@ -800,13 +822,16 @@ def main_action():
                 hero.angle = angleR * 180 / math.pi
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if hero.gun is not None:
-
                     mousePos['x'], mousePos['y'] = pygame.mouse.get_pos()
                     x = hero.rect.x + hero.image.get_rect()[2] // 2
                     y = hero.rect.y + hero.image.get_rect()[3] // 2
                     angleR = math.atan2(mousePos['y'] - y,
                                         mousePos['x'] - x)
                     if hero.strike_can:
+                        if hero.gun.ammo_now == 0:
+                            print(hero.gun.wait)
+                            continue
+                        hero.gun.ammo_now -= 1
                         firesList.append(
                             [
                                 angleR,
@@ -816,7 +841,14 @@ def main_action():
                                 y
                             ]
                         )
+                    print(hero.gun.ammo_now)
         #camera
+        if hero.gun.ammo_now == 0:
+            hero.gun.wait += 1
+            print(hero.gun.wait)
+            if hero.gun.wait_max == hero.gun.wait:
+                hero.gun.ammo_now = hero.gun.ammo
+                hero.gun.wait = 0
         camera.update(hero)
         for sprite in all_sprites:
             camera.apply(sprite)
@@ -888,7 +920,7 @@ def main_action():
             elif pygame.sprite.spritecollideany(sprite, enemy_sprites):
                 lst = pygame.sprite.spritecollide(sprite, enemy_sprites, False)
                 for person in pygame.sprite.spritecollide(sprite, enemy_sprites, False):
-                    person.health -= 100
+                    person.health -= hero.gun.power
                     if person.health <= 0:
                         person.kill()
                         print('enemy died')
@@ -974,7 +1006,7 @@ def reset():
     sprites_ = pygame.sprite.Group()
     unmoving_sprites = pygame.sprite.Group()
     mousePos = {'x': 0, 'y': 0}
-    ak47 = Gun('gun.png')
+    ak47 = Gun(power=15, ammo=30, gun_image='gun.png')
 #
 # def home_action():
 #     running = True
