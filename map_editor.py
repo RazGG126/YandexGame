@@ -24,6 +24,7 @@ init_map()
 
 number = 1
 running = True
+file_name = None
 while running:
     screen.fill(pygame.Color('black'))
     for event in pygame.event.get():
@@ -34,16 +35,20 @@ while running:
             init_map()
 
         if event.type == pygame.KEYDOWN and event.key == pygame.K_s:
-            file = open('game_map.txt', 'w')
+            file_n = input('Название файла: ')
+            while file_name is None and len(file_n) == 0:
+                file_n = input('Название файла: ')
+            file = open(file_name if len(file_n) == 0 else file_n, 'w')
             for row in range(world_height):
                 for col in range(world_width):
                     file.write(str(world[row][col]))
                 file.write('\n')
             file.close()
-            print('Карта сохранена')
+            print(f'Карта сохранена {file_name if len(file_n) == 0 else file_n}')
         if event.type == pygame.KEYDOWN and event.key == pygame.K_o:
             try:
-                file = open('game_map.txt', 'r')
+                file_name = input('Название файла: ')
+                file = open(file_name, 'r')
 
                 row, col = 0, 0
                 for line in file:
