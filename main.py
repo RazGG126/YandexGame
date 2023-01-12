@@ -631,7 +631,7 @@ class Camera:
         self.dy = -(target.rect.y + target.rect.h // 2 - HEIGHT // 2)
 
 
-def init_frames():
+def init_frames(map):
     global hero_main_frames, moving_cube, hero, cat, luke
     for i in range(1, 7):
         hero_main_frames.append(load_image(rf'walk\{i}.png'))
@@ -641,7 +641,7 @@ def init_frames():
             GroundTexture('ground_ender', x, y)
 
     world = []
-    file = open('game_map.txt', 'r')
+    file = open(map, 'r')
     for line in file:
         line = line.strip()
         arr = []
@@ -781,7 +781,7 @@ def print_info():
 def main_action():
     running = True
 
-    init_frames()
+    init_frames('game_map.txt')
 
     Border(-50, 0, 2100, 0, 't')
     Border(-50, 2000, 2100, 2000, 'b')
@@ -1008,22 +1008,79 @@ def reset():
     mousePos = {'x': 0, 'y': 0}
     ak47 = Gun(power=15, ammo=30, gun_image='gun.png')
 #
-# def home_action():
-#     running = True
-#
-#     init_frames('home.txt')
-#
-#     Border(-50, 0, 2100, 0, 't')
-#     Border(-50, 2000, 2100, 2000, 'b')
-#     Border(0, 0, 0, 2100, 'l')
-#     Border(2000, 0, 2000, 2100, 'r')
-#
-#     camera = Camera()
+
+
+def home_action():
+    running = True
+
+    init_frames('home.txt')
+
+    Border(-50, 0, 2100, 0, 't')
+    Border(-50, 2000, 2100, 2000, 'b')
+    Border(0, 0, 0, 2100, 'l')
+    Border(2000, 0, 2000, 2100, 'r')
+
+    camera = Camera()
+    while running:
+        SCREEN.fill(pygame.Color('black'))
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+
+        camera.update(hero)
+        for sprite in all_sprites:
+            camera.apply(sprite)
+        #
+        # if len(enemy_sprites) == 0:
+        #     win = True
+        #     running = False
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_RETURN]:
+            if hero.catch_cat and hero.on_the_luke:
+                win = True
+                running = False
+        if keys[pygame.K_SPACE]:
+            win = True
+            running = False
+        if keys[pygame.K_a]:
+            hero.moving = True
+            hero.moving_left = True
+            hero.moving_right = False
+            hero.move_x -= hero.speed_x
+        if keys[pygame.K_d]:
+            hero.moving = True
+            hero.moving_left = False
+            hero.moving_right = True
+            hero.move_x += hero.speed_x
+        if keys[pygame.K_w]:
+            hero.moving = True
+            hero.move_y -= hero.speed_y
+        if keys[pygame.K_s]:
+            hero.moving = True
+            hero.move_y += hero.speed_y
+
+        ground_sprites.draw(SCREEN)
+        sprites.draw(SCREEN)
+        enemy_sprites.draw(SCREEN)
+        sprites.update(hero, moving_cube, sprites_, enemy_sprites, cat, luke)
+        enemy_sprites.update(camera)
+        print_info()
+        if keys[pygame.K_ESCAPE]:
+            pause()
+        CLOCK.tick(FPS)
+        pygame.display.flip()
+    if win:
+        return game_over_win(True)
+    return game_over_win()
 
 
 def start_game():
     reset()
+    home_action()
+    reset()
     while main_action():
+        reset()
+        home_action()
         reset()
 
 
