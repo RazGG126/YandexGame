@@ -884,7 +884,7 @@ def main_action():
             elif pygame.sprite.spritecollideany(sprite, enemy_sprites):
                 lst = pygame.sprite.spritecollide(sprite, enemy_sprites, False)
                 for person in pygame.sprite.spritecollide(sprite, enemy_sprites, False):
-                    person.health -= 10
+                    person.health -= 100
                     if person.health <= 0:
                         person.kill()
                         print('enemy died')

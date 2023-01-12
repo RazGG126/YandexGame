@@ -49,7 +49,10 @@ while running:
                 for line in file:
                     line = line.strip()
                     for elem in line:
-                        world[row][col] = int(elem)
+                        try:
+                            world[row][col] = int(elem)
+                        except Exception:
+                            world[row][col] = elem
                         col += 1
                     row += 1
                     col = 0
