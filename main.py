@@ -788,23 +788,55 @@ def show_stat():
         CLOCK.tick(FPS)
 
 
-def pause():
+def pause(value=False):
     paused = True
     button = Button(100, 50, active_color=(255, 255, 255), inactive_color=(229, 190, 1))
+    play = False
+    pause_ = False
     while paused:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
             if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
                 paused = False
+                if value:
+                    play = True
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                pause_ = True
+                paused = False
         # 21,23,25
         #27, 17, 22
+        if value:
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_a]:
+                paused = False
+                play = False
+            if keys[pygame.K_d]:
+                paused = False
+                play = False
+            if keys[pygame.K_w]:
+                paused = False
+                play = False
+            if keys[pygame.K_s]:
+                paused = False
+                play = False
+
         pygame.draw.rect(SCREEN, (21, 23, 25), (WIDTH // 2 - 300, HEIGHT // 2 - 80, 600, 230))
-        print_text("PAUSED.", (243, 165, 5), 75, x=0, y=30, center=True)
-        print_text("PRESS ENTER TO CONTINUE", (255, 202, 134), 50, x=0, y=-30, center=True)
-        button.draw(x=WIDTH // 2 - 50, y=HEIGHT // 2 + 75, message='МЕНЮ', action=show_menu, dl_x=15, dl_y=15)
+        if not value:
+            print_text("PAUSED.", (243, 165, 5), 75, x=0, y=30, center=True)
+            print_text("PRESS ENTER TO CONTINUE", (255, 202, 134), 50, x=0, y=-30, center=True)
+            button.draw(x=WIDTH // 2 - 50, y=HEIGHT // 2 + 75, message='МЕНЮ', action=show_menu, dl_x=15, dl_y=15)
+        if value:
+            print_text(f"LEVEL {user.level}.", (243, 165, 5), 75, x=0, y=30, center=True)
+            print_text("PRESS ENTER TO START", (255, 202, 134), 50, x=0, y=-30, center=True)
+            button.draw(x=WIDTH // 2 - 50, y=HEIGHT // 2 + 75, message='МЕНЮ', action=show_menu, dl_x=15, dl_y=15)
         pygame.display.flip()
         CLOCK.tick(FPS)
+    if pause_:
+        pause()
+    if play:
+        return True
+    return False
 
 
 def print_info():
@@ -1010,15 +1042,17 @@ def game_over_win(value=False):
                 terminate()
             if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
                 return True
+        if value == 'access':
+            return True
         pygame.draw.rect(SCREEN, (21, 23, 25), (WIDTH // 2 - 300, HEIGHT // 2 - 80, 600, 230))
-        if not value:
+        if value is False:
             print_text("YOU LOSE.", (255, 0, 51), 75, x=0, y=30, center=True)
             print_text("PRESS ENTER TO PLAY AGAIN", (217, 80, 48), 50, x=0, y=-30, center=True)
             button_lose.draw(x=WIDTH // 2 - 50, y=HEIGHT // 2 + 75, message='МЕНЮ', action=show_menu, dl_x=15, dl_y=15)
-        else:
+        elif value is True:
             #124, 252, 0
             print_text("YOU WIN.", (124, 252, 0), 75, x=0, y=30, center=True)
-            print_text("PRESS ENTER TO PLAY AGAIN", (189, 218, 87), 50, x=0, y=-30, center=True)
+            print_text("PRESS ENTER TO CONTINUE", (189, 218, 87), 50, x=0, y=-30, center=True)
             button_win.draw(x=WIDTH // 2 - 50, y=HEIGHT // 2 + 75, message='МЕНЮ', action=show_menu, dl_x=15, dl_y=15)
 
         pygame.display.flip()
@@ -1043,6 +1077,9 @@ def show_menu():
         settings_btn.draw(175, 355, dl_x=50, dl_y=18, message='EXIT.', action=terminate, font_size=30)
         pygame.display.update()
         CLOCK.tick(FPS)
+
+
+
 
 
 def reset():
@@ -1087,13 +1124,6 @@ def home_action():
         #     win = True
         #     running = False
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_RETURN]:
-            if hero.catch_cat and hero.on_the_luke:
-                win = True
-                running = False
-        if keys[pygame.K_SPACE]:
-            win = True
-            running = False
         if keys[pygame.K_a]:
             hero.moving = True
             hero.moving_left = True
@@ -1119,11 +1149,16 @@ def home_action():
         print_info()
         if keys[pygame.K_ESCAPE]:
             pause()
+        if keys[pygame.K_SPACE]:
+            if pause(True):
+                running = False
+        if keys[pygame.K_RETURN]:
+            if hero.on_the_luke:
+                if pause(True):
+                    running = False
         CLOCK.tick(FPS)
         pygame.display.flip()
-    if win:
-        return game_over_win(True)
-    return game_over_win()
+    return game_over_win('access')
 
 
 def start_game():
