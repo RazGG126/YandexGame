@@ -1,9 +1,10 @@
 import os
 import sys
 import pygame
+import json
 import random
-from copy import deepcopy
 import math
+from User import User, levels
 from pygame.sprite import AbstractGroup
 
 pygame.init()
@@ -24,6 +25,7 @@ sprites = pygame.sprite.Group()
 sprites_ = pygame.sprite.Group()
 unmoving_sprites = pygame.sprite.Group()
 mousePos = {'x': 0, 'y': 0}
+user = None
 hero = None
 cat = None
 luke = None
@@ -58,6 +60,24 @@ DICT_IMAGES = {
     'branch': load_image('branch.png'),
     'luke': load_image('luke.png')
 }
+
+
+def load_json():
+    global user
+    data = json.load(open('user.json', 'r', encoding='utf-8'))
+    user = User(level=data['level'], coins=data['coins'],
+                skin=data['skin'], kills=data['kills'],
+                restarts=data['restarts'], ammo_spend=data['ammo_spend'])
+
+
+load_json()
+
+
+def dump_json():
+    global user
+    data = user.create_dict()
+
+    json.dump(data, open('user.json', 'w', encoding='utf-8'))
 
 
 class Gun(pygame.sprite.Sprite):
@@ -742,8 +762,30 @@ def print_text(text, color, font, x=None, y=None, center=False):
 
 
 def terminate():
+    dump_json()
     pygame.quit()
     sys.exit()
+
+
+def show_stat():
+    paused = True
+    btn = Button(150, 50, active_color=(255, 255, 255), inactive_color=(255, 202, 134))
+    while paused:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+                paused = False
+        # 21,23,25
+        # 27, 17, 22
+        pygame.draw.rect(SCREEN, (0, 0, 0), (0, 0, WIDTH, HEIGHT))
+        print_text("STATA.", (255, 255, 255), 75, x=0, y=90, center=True)
+        print_text(f"level: {user.level}    coins: {user.coins}", (255, 202, 134), 50, x=0, y=40, center=True)
+        print_text(f"kills: {user.kills}    restarts: {user.restarts}", (255, 202, 134), 50, x=0, y=5, center=True)
+        print_text(f"ammo_spend: {user.ammo_spend}", (255, 202, 134), 50, x=0, y=-30, center=True)
+        btn.draw(WIDTH // 2 - 75, HEIGHT // 2 + 70, dl_x=45, dl_y=18, message='BACK', action=show_menu, font_size=30)
+        pygame.display.flip()
+        CLOCK.tick(FPS)
 
 
 def pause():
@@ -772,16 +814,25 @@ def print_info():
     text_y = HEIGHT - text.get_height()
     text_w = text.get_width()
     text_h = text.get_height()
-    pygame.draw.rect(SCREEN, pygame.Color('black'), (WIDTH // 2 - text.get_width() // 2 - 62, HEIGHT - 20,
-                                                     text.get_width() + 120, 20))
+    # pygame.draw.rect(SCREEN, pygame.Color('black'), (WIDTH // 2 - text.get_width() // 2 - 62, HEIGHT - 20,
+    #                                                  text.get_width() + 120, 20))
     pygame.draw.rect(SCREEN, pygame.Color(127,255,0), (WIDTH // 2, HEIGHT - text.get_height() + 4, abs(hero.health), 10))
+    # pygame.draw.rect(SCREEN, pygame.Color('black'), (0, HEIGHT - text.get_height(),
+    #                                                  text.get_width(), 20))
+    print_text(F'Ammo: {hero.gun.ammo_now}', color=(243, 165, 5), x=0, y=HEIGHT - text.get_height(), font=25)
+    if hero.gun.wait != 0:
+        # pygame.draw.rect(SCREEN, pygame.Color('black'), (0, HEIGHT - text.get_height(),
+        #                                                  text.get_width() + 120, 20))
+        print_text(F'reloading: {hero.gun.wait}%', color=(243, 165, 5), x=100, y=HEIGHT - text.get_height(), font=25)
+    pygame.draw.rect(SCREEN, pygame.Color(127, 255, 0),
+                     (WIDTH // 2, HEIGHT - text.get_height() + 4, abs(hero.health), 10))
     SCREEN.blit(text, (text_x, text_y))
 
 
 def main_action():
     running = True
 
-    init_frames('game_map.txt')
+    init_frames(levels[user.level - 1])
 
     Border(-50, 0, 2100, 0, 't')
     Border(-50, 2000, 2100, 2000, 'b')
@@ -832,6 +883,7 @@ def main_action():
                             print(hero.gun.wait)
                             continue
                         hero.gun.ammo_now -= 1
+                        user.ammo_spend += 1
                         firesList.append(
                             [
                                 angleR,
@@ -845,25 +897,27 @@ def main_action():
         #camera
         if hero.gun.ammo_now == 0:
             hero.gun.wait += 1
-            print(hero.gun.wait)
+            # print(hero.gun.wait)
             if hero.gun.wait_max == hero.gun.wait:
                 hero.gun.ammo_now = hero.gun.ammo
                 hero.gun.wait = 0
         camera.update(hero)
         for sprite in all_sprites:
             camera.apply(sprite)
-        #
-        # if len(enemy_sprites) == 0:
-        #     win = True
-        #     running = False
+
         keys = pygame.key.get_pressed()
         if keys[pygame.K_RETURN]:
             if hero.catch_cat and hero.on_the_luke:
+                user.new_level()
                 win = True
                 running = False
         if keys[pygame.K_SPACE]:
+            user.new_level()
             win = True
             running = False
+        if keys[pygame.K_r]:
+            if hero.gun.wait == 0:
+                hero.gun.ammo_now = 0
         if keys[pygame.K_a]:
             hero.moving = True
             hero.moving_left = True
@@ -976,7 +1030,6 @@ def show_menu():
 
     btn = Button(200, 100, active_color=(255, 255, 255), inactive_color=(0, 0, 0))
     settings_btn = Button(150, 50, active_color=(255, 255, 255), inactive_color=(0, 0, 0))
-    dl = 30
     show = True
     while show:
         for event in pygame.event.get():
@@ -986,7 +1039,7 @@ def show_menu():
         SCREEN.blit(menu_background, (0, 0))
         btn.draw(150, 80, dl_x=35, dl_y=25, message='PLAY.', action=start_game, font_size=70)
         settings_btn.draw(175, 205, dl_x=25, dl_y=18, message='SETTINGS.', font_size=30)
-        settings_btn.draw(175, 280, dl_x=40, dl_y=18, message='STATА.', font_size=30)
+        settings_btn.draw(175, 280, dl_x=40, dl_y=18, message='STATА.', action=show_stat, font_size=30)
         settings_btn.draw(175, 355, dl_x=50, dl_y=18, message='EXIT.', action=terminate, font_size=30)
         pygame.display.update()
         CLOCK.tick(FPS)
@@ -1007,7 +1060,6 @@ def reset():
     unmoving_sprites = pygame.sprite.Group()
     mousePos = {'x': 0, 'y': 0}
     ak47 = Gun(power=15, ammo=30, gun_image='gun.png')
-#
 
 
 def home_action():
