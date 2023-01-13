@@ -1009,6 +1009,7 @@ def main_action():
                     person.health -= hero.gun.power
                     if person.health <= 0:
                         person.kill()
+                        user.kills += 1
                         print('enemy died')
                 firesList.remove(elem)
             elif pygame.sprite.spritecollideany(sprite, horizontal_borders) or pygame.sprite.spritecollideany(sprite, vertical_borders):
@@ -1029,6 +1030,7 @@ def main_action():
         pygame.display.flip()
     if win:
         return game_over_win(True)
+    user.restarts += 1
     return game_over_win()
 
 
