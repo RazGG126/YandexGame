@@ -115,18 +115,19 @@ class Cat(pygame.sprite.Sprite):
         self.stand = True
 
     def sound_meow(self, hero):
-        dl_x = self.rect.x - hero.rect.x
-        dl_y = self.rect.y - hero.rect.y
+        if not hero.catch_cat:
+            dl_x = self.rect.x - hero.rect.x
+            dl_y = self.rect.y - hero.rect.y
 
-        if (dl_x ** 2 + dl_y ** 2) ** 0.5 < 100:
-            if self.count_meow == 30:
-                self.was_meow = False
-                self.count_meow = 0
-            if not self.was_meow:
-                meow.play()
-                self.was_meow = True
-            else:
-                self.count_meow += 1
+            if (dl_x ** 2 + dl_y ** 2) ** 0.5 < 300:
+                if self.count_meow == 50:
+                    self.was_meow = False
+                    self.count_meow = 0
+                if not self.was_meow:
+                    meow.play()
+                    self.was_meow = True
+                else:
+                    self.count_meow += 1
 
     def update_frame(self):
         self.cur_frame += 1
@@ -1018,8 +1019,9 @@ def main_action():
             hero.moving = True
             hero.move_y += hero.speed_y
 
-        # hero.sound_walk()
-        # cat.sound_meow(hero)
+        hero.sound_walk()
+        cat.sound_meow(hero)
+
         # if hero.moving:
         #     if hero.count_walk == 10:
         #         hero.was_walk = False
@@ -1208,7 +1210,7 @@ def home_action():
             hero.moving = True
             hero.move_y += hero.speed_y
 
-        # hero.sound_walk()
+        hero.sound_walk()
 
         ground_sprites.draw(SCREEN)
         sprites.draw(SCREEN)
