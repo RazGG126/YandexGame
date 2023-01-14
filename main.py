@@ -7,6 +7,7 @@ import math
 from User import User, levels
 from pygame.sprite import AbstractGroup
 
+# pygame.mixer.pre_init(44100, -16, 1, 512)
 pygame.init()
 WIDTH = 1000
 HEIGHT = 500
@@ -25,6 +26,7 @@ sprites = pygame.sprite.Group()
 sprites_ = pygame.sprite.Group()
 unmoving_sprites = pygame.sprite.Group()
 mousePos = {'x': 0, 'y': 0}
+channel_walk = None
 user = None
 hero = None
 cat = None
@@ -107,7 +109,24 @@ class Cat(pygame.sprite.Sprite):
         self.moving_left = True
         self.moving_right = False
 
+        self.was_meow = False
+        self.count_meow = 0
+
         self.stand = True
+
+    def sound_meow(self, hero):
+        dl_x = self.rect.x - hero.rect.x
+        dl_y = self.rect.y - hero.rect.y
+
+        if (dl_x ** 2 + dl_y ** 2) ** 0.5 < 100:
+            if self.count_meow == 30:
+                self.was_meow = False
+                self.count_meow = 0
+            if not self.was_meow:
+                meow.play()
+                self.was_meow = True
+            else:
+                self.count_meow += 1
 
     def update_frame(self):
         self.cur_frame += 1
@@ -140,6 +159,9 @@ class HeroMain(pygame.sprite.Sprite):
 
         self.health = 100
 
+        self.was_walk = False
+        self.count_walk = 0
+
         self.catch_cat = False
         self.on_the_luke = False
 
@@ -155,6 +177,17 @@ class HeroMain(pygame.sprite.Sprite):
 
     # def rotate(self):
     #     self.image = pygame.transform.rotate(self.image, 360 - self.angle)
+
+    def sound_walk(self):
+        if self.moving:
+            if self.count_walk == 10:
+                self.was_walk = False
+                self.count_walk = 0
+            if not hero.was_walk:
+                walk.play()
+                self.was_walk = True
+            else:
+                self.count_walk += 1
 
     def update_frame(self, stand=False):
         if stand:
@@ -483,6 +516,11 @@ class Enemy(pygame.sprite.Sprite):
                 self.count = 0
                 # if self.ammo_now != 0:
                 #     self.ammo_now -= 1
+                # dl_x = self.rect.x - self.hero.rect.x
+                # dl_y = self.rect.y - self.hero.rect.y
+                #
+                # if (dl_x ** 2 + dl_y ** 2) ** 0.5 > 75:
+                #     pygame.mixer.Sound('data/sounds/shoot.ogg').play()
                 self.fires_list.append(
                                 [
                                     math.atan2(y_2 - y,
@@ -490,7 +528,8 @@ class Enemy(pygame.sprite.Sprite):
                                     x - 10,
                                     y,
                                     x,
-                                    y
+                                    y,
+                                    True
                                 ]
                             )
                 # else:
@@ -524,9 +563,17 @@ class Enemy(pygame.sprite.Sprite):
             sprite.rect.x = elem[1]
             sprite.rect.y = elem[2]
 
+            if (x_ ** 2 + y_ ** 2) ** 0.5 > 80:
+                if elem[5]:
+                    shoot.play()
+                    elem[5] = False
+
             if (x_ ** 2 + y_ ** 2) ** 0.5 > 320:
                 self.fires_list.remove(elem)
             elif pygame.sprite.collide_rect(sprite, self.hero):
+                if elem[5]:
+                    shoot.play()
+                    elem[5] = False
                 self.hero.health -= max(self.gun.power - 5, 5)
                 print(f'Hero damaged: {self.hero.health}')
                 if self.hero.health <= 0:
@@ -536,6 +583,7 @@ class Enemy(pygame.sprite.Sprite):
                                                                                                               vertical_borders):
                 self.fires_list.remove(elem)
             elif pygame.sprite.spritecollideany(sprite, sprites_) or pygame.sprite.collide_rect(sprite, moving_cube):
+
                 self.fires_list.remove(elem)
             else:
                 pygame.draw.circle(image, pygame.Color("red"),
@@ -862,6 +910,7 @@ def print_info():
 
 
 def main_action():
+    global channel_walk
     running = True
 
     init_frames(levels[user.level - 1])
@@ -925,7 +974,9 @@ def main_action():
                                 y
                             ]
                         )
+                        shoot.play()
                     print(hero.gun.ammo_now)
+
         #camera
         if hero.gun.ammo_now == 0:
             hero.gun.wait += 1
@@ -966,6 +1017,18 @@ def main_action():
         if keys[pygame.K_s]:
             hero.moving = True
             hero.move_y += hero.speed_y
+
+        # hero.sound_walk()
+        # cat.sound_meow(hero)
+        # if hero.moving:
+        #     if hero.count_walk == 10:
+        #         hero.was_walk = False
+        #         hero.count_walk = 0
+        #     if not hero.was_walk:
+        #         walk.play()
+        #         hero.was_walk = True
+        #     else:
+        #         hero.count_walk += 1
 
         ground_sprites.draw(SCREEN)
         sprites.draw(SCREEN)
@@ -1062,6 +1125,11 @@ def game_over_win(value=False):
 
 
 def show_menu():
+    global from_game
+    print(from_game)
+    if from_game:
+        pygame.mixer.music.play(-1)
+        from_game = False
     menu_background = DICT_IMAGES['menu_bg']
 
     btn = Button(200, 100, active_color=(255, 255, 255), inactive_color=(0, 0, 0))
@@ -1079,9 +1147,6 @@ def show_menu():
         settings_btn.draw(175, 355, dl_x=50, dl_y=18, message='EXIT.', action=terminate, font_size=30)
         pygame.display.update()
         CLOCK.tick(FPS)
-
-
-
 
 
 def reset():
@@ -1143,6 +1208,8 @@ def home_action():
             hero.moving = True
             hero.move_y += hero.speed_y
 
+        # hero.sound_walk()
+
         ground_sprites.draw(SCREEN)
         sprites.draw(SCREEN)
         enemy_sprites.draw(SCREEN)
@@ -1164,14 +1231,27 @@ def home_action():
 
 
 def start_game():
+    global from_game
+    from_game = True
+    pygame.mixer.music.stop()
     reset()
     home_action()
     reset()
     while main_action():
+        from_game = True
         reset()
         home_action()
         reset()
 
+
+from_game = False
+
+pygame.mixer.music.load('data/sounds/bg-tack.ogg')
+pygame.mixer.music.play(-1)
+
+shoot = pygame.mixer.Sound('data/sounds/shoot.ogg')
+walk = pygame.mixer.Sound('data/sounds/walk.ogg')
+meow = pygame.mixer.Sound('data/sounds/meow.ogg')
 
 show_menu()
 terminate()
