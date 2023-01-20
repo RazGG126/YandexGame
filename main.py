@@ -118,12 +118,13 @@ class Cat(pygame.sprite.Sprite):
         if not hero.catch_cat:
             dl_x = self.rect.x - hero.rect.x
             dl_y = self.rect.y - hero.rect.y
-
-            if (dl_x ** 2 + dl_y ** 2) ** 0.5 < 300:
-                if self.count_meow == 50:
+            distance = (dl_x ** 2 + dl_y ** 2) ** 0.5
+            if distance < 300:
+                if self.count_meow == 100:
                     self.was_meow = False
                     self.count_meow = 0
                 if not self.was_meow:
+                    meow.set_volume((10 - distance / 100 * 3) / 10)
                     meow.play()
                     self.was_meow = True
                 else:
@@ -175,6 +176,9 @@ class HeroMain(pygame.sprite.Sprite):
         self.gun = gun  # class
         self.gun_image = gun.image
         self.strike_can = True
+
+        self.reloading = False
+        self.count_reloading = 0
 
     # def rotate(self):
     #     self.image = pygame.transform.rotate(self.image, 360 - self.angle)
@@ -857,18 +861,18 @@ def pause(value=False):
         #27, 17, 22
         if value:
             keys = pygame.key.get_pressed()
-            if keys[pygame.K_a]:
+            if keys[pygame.K_a] or keys[pygame.K_d] or keys[pygame.K_w] or keys[pygame.K_s]:
                 paused = False
                 play = False
-            if keys[pygame.K_d]:
-                paused = False
-                play = False
-            if keys[pygame.K_w]:
-                paused = False
-                play = False
-            if keys[pygame.K_s]:
-                paused = False
-                play = False
+            # if keys[pygame.K_d]:
+            #     paused = False
+            #     play = False
+            # if keys[pygame.K_w]:
+            #     paused = False
+            #     play = False
+            # if keys[pygame.K_s]:
+            #     paused = False
+            #     play = False
 
         pygame.draw.rect(SCREEN, (21, 23, 25), (WIDTH // 2 - 300, HEIGHT // 2 - 80, 600, 230))
         if not value:
@@ -927,20 +931,6 @@ def main_action():
 
     win = False
 
-    # cube_new = Cube(width=50, height=50,  x=500, y=300)
-    # cube_new2 = Cube(width=50, height=50,  x=100, y=340)
-    # cube_new3 = Cube(width=50, height=50,  x=900, y=100)
-
-    # for sprite in enemy_sprites:
-    #     sprite.hero = hero
-    # for i in range(1):
-    #     enemy = Enemy(100 * random.randint(1, 10), 100 * random.randint(1, 6),gun=ak47, frames=hero_main_frames, hero=hero)
-    #     enemy_sprites.add(enemy)
-    #
-    # enemy_sprites.add(Enemy(1000, 500, gun=ak47, frames=DICT_IMAGES['cat'], cat=True, hero=hero))
-
-    # sprites_.add(cube_new, cube_new2, cube_new3)
-    # unmoving_sprites.add(cube_new, cube_new2, cube_new3, cube_red)
     while running:
         SCREEN.fill(pygame.Color('black'))
         for event in pygame.event.get():
@@ -980,11 +970,16 @@ def main_action():
 
         #camera
         if hero.gun.ammo_now == 0:
+            if not hero.reloading:
+                hero.reloading = True
+                reloading.play()
             hero.gun.wait += 1
             # print(hero.gun.wait)
             if hero.gun.wait_max == hero.gun.wait:
                 hero.gun.ammo_now = hero.gun.ammo
                 hero.gun.wait = 0
+                hero.reloading = False
+
         camera.update(hero)
         for sprite in all_sprites:
             camera.apply(sprite)
@@ -1252,8 +1247,10 @@ pygame.mixer.music.load('data/sounds/bg-tack.ogg')
 pygame.mixer.music.play(-1)
 
 shoot = pygame.mixer.Sound('data/sounds/shoot.ogg')
+shoot.set_volume(0.5)
 walk = pygame.mixer.Sound('data/sounds/walk.ogg')
 meow = pygame.mixer.Sound('data/sounds/meow.ogg')
-
+reloading = pygame.mixer.Sound('data/sounds/reloading.ogg')
+reloading.set_volume(0.3)
 show_menu()
 terminate()
