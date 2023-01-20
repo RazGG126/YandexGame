@@ -54,7 +54,9 @@ DICT_IMAGES = {
     'ground_ender': load_image(r'ground\ender_block.png'),
     'enemy_red': load_image(r'enemy_red.png'),
     'stone_block': load_image(r'stone_block.png'),
-    'cat': [load_image('cat.png'), load_image('cat_2.png'), load_image('cat.png'), load_image('cat_3.png')],
+    'cat1': [load_image('cat.png'), load_image('cat_2.png'), load_image('cat.png'), load_image('cat_3.png')],
+    'cat2': [load_image('cat_treha.png'), load_image('cat_treha_2.png'),
+             load_image('cat_treha_4.png'), load_image('cat_treha_3.png')],
     'box': load_image('box.jpg'),
     'ground_sand': load_image('ground_sand.png'),
     'ground_stone': load_image('ground_stone.jpg'),
@@ -69,8 +71,8 @@ def load_json():
     data = json.load(open('user.json', 'r', encoding='utf-8'))
     user = User(level=data['level'], coins=data['coins'],
                 skin=data['skin'], kills=data['kills'],
-                restarts=data['restarts'], ammo_spend=data['ammo_spend'])
-
+                restarts=data['restarts'], ammo_spend=data['ammo_spend'],
+                caught_cat=data['caught_cat'])
 
 load_json()
 
@@ -96,7 +98,7 @@ class Gun(pygame.sprite.Sprite):
 
 
 class Cat(pygame.sprite.Sprite):
-    def __init__(self,x, y, frames, static=False, *groups: AbstractGroup):
+    def __init__(self,x, y, frames, static=False, number='1', *groups: AbstractGroup):
         super().__init__(all_sprites, *groups)
         self.frames = frames
         self.cur_frame = 0
@@ -111,6 +113,8 @@ class Cat(pygame.sprite.Sprite):
 
         self.was_meow = False
         self.count_meow = 0
+
+        self.number = number
 
         self.static = static
 
@@ -256,6 +260,7 @@ class HeroMain(pygame.sprite.Sprite):
             # self.gun.rect.y = self.rect.y + self.image.get_size()[1] // 2
 
     def update(self, cube, cube_2, sprites, enemy_sprites, cat, luke):
+        global user
         if not self.home:
             self.move_gun()
         self.rect.x += self.move_x
@@ -303,6 +308,8 @@ class HeroMain(pygame.sprite.Sprite):
             self.update_frame(True)
         if not self.home:
             if pygame.sprite.collide_mask(self, cat):
+                if not self.catch_cat:
+                    user.caught_cat += cat.number
                 cat.kill()
                 self.catch_cat = True
         if pygame.sprite.collide_rect(self, luke):
@@ -773,11 +780,13 @@ def init_frames(map):
         sprites.add(luke)
 
     if len(cat_l) == 0:
-        for i in range(user.level - 1):
-            sprites.add(Cat(400 + (140 * i), 240, frames=DICT_IMAGES['cat']))
+        if not user.caught_cat is None:
+            for x, i in enumerate(user.caught_cat, 0):
+                sprites.add(Cat(400 + (140 * x), 240, frames=DICT_IMAGES['cat' + i], number=i))
     else:
         for elem in cat_l:
-            cat = Cat(elem[0], elem[1], frames=DICT_IMAGES['cat'])
+            n = str(random.randint(1, 2))
+            cat = Cat(elem[0], elem[1], frames=DICT_IMAGES['cat' + n], number=n)
             sprites.add(cat)
 
     for elem in hero_l:
@@ -1002,6 +1011,7 @@ def main_action():
                 running = False
         if keys[pygame.K_SPACE]:
             user.new_level()
+            # user.caught_cat += cat.number
             win = True
             running = False
         if keys[pygame.K_r]:
