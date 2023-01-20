@@ -96,7 +96,7 @@ class Gun(pygame.sprite.Sprite):
 
 
 class Cat(pygame.sprite.Sprite):
-    def __init__(self,x, y, frames, *groups: AbstractGroup):
+    def __init__(self,x, y, frames, static=False, *groups: AbstractGroup):
         super().__init__(all_sprites, *groups)
         self.frames = frames
         self.cur_frame = 0
@@ -112,7 +112,7 @@ class Cat(pygame.sprite.Sprite):
         self.was_meow = False
         self.count_meow = 0
 
-        self.stand = True
+        self.static = static
 
     def sound_meow(self, hero):
         if not hero.catch_cat:
@@ -179,6 +179,8 @@ class HeroMain(pygame.sprite.Sprite):
 
         self.reloading = False
         self.count_reloading = 0
+
+        self.home = False
 
     # def rotate(self):
     #     self.image = pygame.transform.rotate(self.image, 360 - self.angle)
@@ -254,7 +256,8 @@ class HeroMain(pygame.sprite.Sprite):
             # self.gun.rect.y = self.rect.y + self.image.get_size()[1] // 2
 
     def update(self, cube, cube_2, sprites, enemy_sprites, cat, luke):
-        self.move_gun()
+        if not self.home:
+            self.move_gun()
         self.rect.x += self.move_x
         self.rect.y += self.move_y
 
@@ -298,9 +301,10 @@ class HeroMain(pygame.sprite.Sprite):
             self.update_frame()
         else:
             self.update_frame(True)
-        if pygame.sprite.collide_mask(self, cat):
-            cat.kill()
-            self.catch_cat = True
+        if not self.home:
+            if pygame.sprite.collide_mask(self, cat):
+                cat.kill()
+                self.catch_cat = True
         if pygame.sprite.collide_rect(self, luke):
             self.on_the_luke = True
             if self.catch_cat:
@@ -768,9 +772,12 @@ def init_frames(map):
         luke = Cube(width=80, height=80, x=elem[0], y=elem[1], image=DICT_IMAGES['luke'])
         sprites.add(luke)
 
-    for elem in cat_l:
-        cat = Cat(elem[0], elem[1], frames=DICT_IMAGES['cat'])
-        sprites.add(cat)
+    if len(cat_l) == 0:
+        pass
+    else:
+        for elem in cat_l:
+            cat = Cat(elem[0], elem[1], frames=DICT_IMAGES['cat'])
+            sprites.add(cat)
 
     for elem in hero_l:
         hero = HeroMain(elem[0], elem[1], gun=ak47, frames=hero_main_frames)
@@ -892,7 +899,7 @@ def pause(value=False):
     return False
 
 
-def print_info():
+def print_info(home):
     font = pygame.font.SysFont('monserat', 25)
     text = font.render("Hero health:", True, pygame.Color(127,255,0))
     text_x = WIDTH // 2 - text.get_width() // 2 - 55
@@ -904,7 +911,8 @@ def print_info():
     pygame.draw.rect(SCREEN, pygame.Color(127,255,0), (WIDTH // 2, HEIGHT - text.get_height() + 4, abs(hero.health), 10))
     # pygame.draw.rect(SCREEN, pygame.Color('black'), (0, HEIGHT - text.get_height(),
     #                                                  text.get_width(), 20))
-    print_text(F'Ammo: {hero.gun.ammo_now}', color=(243, 165, 5), x=0, y=HEIGHT - text.get_height(), font=25)
+    if not home:
+        print_text(F'Ammo: {hero.gun.ammo_now}', color=(243, 165, 5), x=0, y=HEIGHT - text.get_height(), font=25)
     if hero.gun.wait != 0:
         # pygame.draw.rect(SCREEN, pygame.Color('black'), (0, HEIGHT - text.get_height(),
         #                                                  text.get_width() + 120, 20))
@@ -930,6 +938,7 @@ def main_action():
     firesList = []
 
     win = False
+    hero.home = False
 
     while running:
         SCREEN.fill(pygame.Color('black'))
@@ -1081,7 +1090,7 @@ def main_action():
                                (5, 5), 5)
             if (x_ ** 2 + y_ ** 2) ** 0.5 > 50:
                 SCREEN.blit(image, [elem[1], elem[2]])
-        print_info()
+        print_info(hero.home)
         if keys[pygame.K_ESCAPE]:
             pause()
         if hero.health <= 0:
@@ -1174,6 +1183,8 @@ def home_action():
     Border(2000, 0, 2000, 2100, 'r')
 
     camera = Camera()
+
+    hero.home = True
     while running:
         SCREEN.fill(pygame.Color('black'))
         for event in pygame.event.get():
@@ -1212,7 +1223,7 @@ def home_action():
         enemy_sprites.draw(SCREEN)
         sprites.update(hero, moving_cube, sprites_, enemy_sprites, cat, luke)
         enemy_sprites.update(camera)
-        print_info()
+        print_info(hero.home)
         if keys[pygame.K_ESCAPE]:
             pause()
         if keys[pygame.K_SPACE]:
