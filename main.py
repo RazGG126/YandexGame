@@ -773,7 +773,8 @@ def init_frames(map):
         sprites.add(luke)
 
     if len(cat_l) == 0:
-        pass
+        for i in range(user.level - 1):
+            sprites.add(Cat(400 + (140 * i), 240, frames=DICT_IMAGES['cat']))
     else:
         for elem in cat_l:
             cat = Cat(elem[0], elem[1], frames=DICT_IMAGES['cat'])
