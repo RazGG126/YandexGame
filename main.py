@@ -50,6 +50,8 @@ def load_image(name, colorkey=None):
 
 
 DICT_IMAGES = {
+    'hero_frames':[load_image(rf'walk\{i}.png') for i in range(1, 7)],
+    'hero_frames_bag':[load_image(rf'walk\{i}.{i}.png') for i in range(1, 7)],
     'menu_bg': load_image('menu_bg.jpg'),
     'ground_ender': load_image(r'ground\ender_block.png'),
     'enemy_red': load_image(r'enemy_red.png'),
@@ -312,6 +314,7 @@ class HeroMain(pygame.sprite.Sprite):
                     user.caught_cat += cat.number
                 cat.kill()
                 self.catch_cat = True
+                self.frames = DICT_IMAGES['hero_frames_bag']
         if pygame.sprite.collide_rect(self, luke):
             self.on_the_luke = True
             if self.catch_cat:
@@ -716,9 +719,7 @@ class Camera:
 
 
 def init_frames(map):
-    global hero_main_frames, moving_cube, hero, cat, luke
-    for i in range(1, 7):
-        hero_main_frames.append(load_image(rf'walk\{i}.png'))
+    global moving_cube, hero, cat, luke
 
     for y in range((2000 // 86) + 1):
         for x in range((2000 // 86) + 1):
@@ -790,12 +791,12 @@ def init_frames(map):
             sprites.add(cat)
 
     for elem in hero_l:
-        hero = HeroMain(elem[0], elem[1], gun=ak47, frames=hero_main_frames)
+        hero = HeroMain(elem[0], elem[1], gun=ak47, frames=DICT_IMAGES['hero_frames'])
         sprites.add(hero)
 
     for elem in enemies:
         enemy = Enemy(elem[0], elem[1], gun=ak47,
-                      frames=hero_main_frames, hero=hero)
+                      frames=DICT_IMAGES['hero_frames'], hero=hero)
         enemy_sprites.add(enemy)
 
     # for elem in ground:
@@ -1011,7 +1012,7 @@ def main_action():
                 running = False
         if keys[pygame.K_SPACE]:
             user.new_level()
-            # user.caught_cat += cat.number
+            user.caught_cat += cat.number
             win = True
             running = False
         if keys[pygame.K_r]:
