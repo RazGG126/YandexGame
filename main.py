@@ -50,8 +50,10 @@ def load_image(name, colorkey=None):
 
 
 DICT_IMAGES = {
-    'hero_frames':[load_image(rf'walk\{i}.png') for i in range(1, 7)],
-    'hero_frames_bag':[load_image(rf'walk\{i}.{i}.png') for i in range(1, 7)],
+    'hero_frames': [load_image(rf'walk\{i}.png') for i in range(1, 7)],
+    'enemy_frames': [load_image(rf'walk\enemy.{i}.png') for i in range(1, 7)],
+    'hero_frames_bag': [load_image(rf'walk\{i}.{i}.png') for i in range(1, 7)],
+    'death_frames': [load_image(rf'death\{i}.png') for i in range(1, 8)],
     'menu_bg': load_image('menu_bg.jpg'),
     'ground_ender': load_image(r'ground\ender_block.png'),
     'enemy_red': load_image(r'enemy_red.png'),
@@ -187,7 +189,6 @@ class HeroMain(pygame.sprite.Sprite):
         self.count_reloading = 0
 
         self.home = False
-
     # def rotate(self):
     #     self.image = pygame.transform.rotate(self.image, 360 - self.angle)
 
@@ -333,7 +334,6 @@ class Enemy(pygame.sprite.Sprite):
         super().__init__(all_sprites, *groups)
         self.frames = frames
         self.cur_frame = 0
-        self.cur_frame_cat = 0
         self.image = self.frames[self.cur_frame]
         self.rect = self.image.get_rect()
         self.rect.x = x
@@ -370,70 +370,75 @@ class Enemy(pygame.sprite.Sprite):
         self.count = 0
         self.fires_list = []
 
-    def update_frame(self, stand=True):
-        if not self.moving:
+        self.dead = False
+        self.dead_anim_end = False
+
+    def update_frame(self, dead=False):
+        if not dead:
+            if not self.moving:
+                if self.moving_left:
+                    self.image = pygame.transform.flip(self.frames[self.cur_frame // 4], True, False)
+                elif self.moving_right:
+                    self.image = self.frames[self.cur_frame // 4]
+            else:
+                self.cur_frame += 1
+                if self.cur_frame > 19:
+                    self.cur_frame = 0
             if self.moving_left:
                 self.image = pygame.transform.flip(self.frames[self.cur_frame // 4], True, False)
             elif self.moving_right:
                 self.image = self.frames[self.cur_frame // 4]
         else:
             self.cur_frame += 1
-            if self.cur_frame > 19:
-                self.cur_frame = 0
-        if self.moving_left:
-            self.image = pygame.transform.flip(self.frames[self.cur_frame // 4], True, False)
-        elif self.moving_right:
-            self.image = self.frames[self.cur_frame // 4]
-
-    # def reload(self):
-    #     if self.ammo_now == 0:
-    #         self.wait += 1
-    #         if self.wait_max == self.wait:
-    #             self.ammo_now = self.ammo
-    #             self.wait = 0
+            if self.cur_frame > 23:
+                self.kill()
+            if self.moving_left:
+                self.image = pygame.transform.flip(self.frames[self.cur_frame // 4], True, False)
+            elif self.moving_right:
+                self.image = self.frames[self.cur_frame // 4]
 
     def update(self, camera):
         # self.reload()
-        self.move_gun(camera)
-        if self.moving:
+        if not self.dead:
+            self.move_gun(camera)
+            if self.moving:
 
-            dl_x = self.hero.rect.x - self.rect.x
-            dl_y = self.hero.rect.y - self.rect.y
+                dl_x = self.hero.rect.x - self.rect.x
+                dl_y = self.hero.rect.y - self.rect.y
 
-            # if self.stop_distance - 50 <= (dl_x ** 2 + dl_y ** 2) ** 0.5 <= self.stop_distance:
-            #     print('yes')
+                self.move_x = self.speed_x if dl_x >= 0 else -self.speed_x
+                self.move_y = self.speed_y if dl_y >= 0 else -self.speed_y
 
-            self.move_x = self.speed_x if dl_x >= 0 else -self.speed_x
-            self.move_y = self.speed_y if dl_y >= 0 else -self.speed_y
-
-            if abs(dl_x) >= abs(dl_y):
-                self.rect.x += self.move_x
-                self.move_x_v = self.move_x
-                if pygame.sprite.spritecollideany(self, unmoving_sprites):
-                    self.rect.x -= self.move_x
-                    self.rect.y += self.move_y_v
+                if abs(dl_x) >= abs(dl_y):
+                    self.rect.x += self.move_x
+                    self.move_x_v = self.move_x
                     if pygame.sprite.spritecollideany(self, unmoving_sprites):
-                        self.rect.y -= self.move_y_v
-                        self.move_y_v = -self.move_y_v
-                    self.stop_distance = 0
+                        self.rect.x -= self.move_x
+                        self.rect.y += self.move_y_v
+                        if pygame.sprite.spritecollideany(self, unmoving_sprites):
+                            self.rect.y -= self.move_y_v
+                            self.move_y_v = -self.move_y_v
+                        self.stop_distance = 0
+                    else:
+                        self.stop_distance = self.d
                 else:
-                    self.stop_distance = self.d
-            else:
-                self.rect.y += self.move_y
-                self.move_y_v = self.move_y
-                if pygame.sprite.spritecollideany(self, unmoving_sprites):
-                    self.rect.y -= self.move_y
-                    self.rect.x += self.move_x_v
+                    self.rect.y += self.move_y
+                    self.move_y_v = self.move_y
                     if pygame.sprite.spritecollideany(self, unmoving_sprites):
-                        self.rect.x -= self.move_x_v
-                        self.move_x_v = -self.move_x_v
-                    self.stop_distance = 0
-                else:
-                    self.stop_distance = self.d
-        self.update_frame()
-        self.render_health()
-        self.move_x = 0
-        self.move_y = 0
+                        self.rect.y -= self.move_y
+                        self.rect.x += self.move_x_v
+                        if pygame.sprite.spritecollideany(self, unmoving_sprites):
+                            self.rect.x -= self.move_x_v
+                            self.move_x_v = -self.move_x_v
+                        self.stop_distance = 0
+                    else:
+                        self.stop_distance = self.d
+            self.update_frame()
+            self.render_health()
+            self.move_x = 0
+            self.move_y = 0
+        else:
+            self.update_frame(dead=True)
 
     def render_health(self):
         pygame.draw.rect(SCREEN, pygame.Color('red'),
@@ -796,7 +801,7 @@ def init_frames(map):
 
     for elem in enemies:
         enemy = Enemy(elem[0], elem[1], gun=ak47,
-                      frames=DICT_IMAGES['hero_frames'], hero=hero)
+                      frames=DICT_IMAGES['enemy_frames'], hero=hero)
         enemy_sprites.add(enemy)
 
     # for elem in ground:
@@ -1088,8 +1093,10 @@ def main_action():
                 lst = pygame.sprite.spritecollide(sprite, enemy_sprites, False)
                 for person in pygame.sprite.spritecollide(sprite, enemy_sprites, False):
                     person.health -= hero.gun.power
-                    if person.health <= 0:
-                        person.kill()
+                    if person.health <= 0 and not person.dead:
+                        person.dead = True
+                        person.frames = DICT_IMAGES['death_frames']
+                        person.cur_frame = 0
                         user.kills += 1
                         print('enemy died')
                 firesList.remove(elem)
