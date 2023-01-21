@@ -31,6 +31,7 @@ user = None
 hero = None
 cat = None
 luke = None
+congratulations = False
 
 
 def load_image(name, colorkey=None):
@@ -75,8 +76,9 @@ def load_json():
     data = json.load(open('user.json', 'r', encoding='utf-8'))
     user = User(level=data['level'], coins=data['coins'],
                 skin=data['skin'], kills=data['kills'],
-                restarts=data['restarts'], ammo_spend=data['ammo_spend'],
+                restarts=data['restarts'], game_replays=data['game_replays'], ammo_spend=data['ammo_spend'],
                 caught_cat=data['caught_cat'])
+
 
 load_json()
 
@@ -858,7 +860,8 @@ def show_stat():
         print_text("STATA.", (255, 255, 255), 75, x=0, y=90, center=True)
         print_text(f"level: {user.level}    coins: {user.coins}", (255, 202, 134), 50, x=0, y=40, center=True)
         print_text(f"kills: {user.kills}    restarts: {user.restarts}", (255, 202, 134), 50, x=0, y=5, center=True)
-        print_text(f"ammo_spend: {user.ammo_spend}", (255, 202, 134), 50, x=0, y=-30, center=True)
+        print_text(f"ammo spend: {user.ammo_spend}", (255, 202, 134), 50, x=150, y=-30, center=True)
+        print_text(f"game replays: {user.game_replays}", (255, 202, 134), 50, x=-150, y=-30, center=True)
         btn.draw(WIDTH // 2 - 75, HEIGHT // 2 + 70, dl_x=45, dl_y=18, message='BACK', action=show_menu, font_size=30)
         pygame.display.flip()
         CLOCK.tick(FPS)
@@ -887,15 +890,6 @@ def pause(value=False):
             if keys[pygame.K_a] or keys[pygame.K_d] or keys[pygame.K_w] or keys[pygame.K_s]:
                 paused = False
                 play = False
-            # if keys[pygame.K_d]:
-            #     paused = False
-            #     play = False
-            # if keys[pygame.K_w]:
-            #     paused = False
-            #     play = False
-            # if keys[pygame.K_s]:
-            #     paused = False
-            #     play = False
 
         pygame.draw.rect(SCREEN, (21, 23, 25), (WIDTH // 2 - 300, HEIGHT // 2 - 80, 600, 230))
         if not value:
@@ -939,7 +933,7 @@ def print_info(home):
 
 
 def main_action():
-    global channel_walk
+    global channel_walk, congratulations
     running = True
 
     init_frames(levels[user.level - 1])
@@ -955,7 +949,8 @@ def main_action():
 
     win = False
     hero.home = False
-
+    if user.level == 1:
+        user.caught_cat = ''
     while running:
         SCREEN.fill(pygame.Color('black'))
         for event in pygame.event.get():
@@ -1013,10 +1008,18 @@ def main_action():
         if keys[pygame.K_RETURN]:
             if hero.catch_cat and hero.on_the_luke:
                 user.new_level()
+                if user.level == 4:
+                    user.level = 1
+                    user.game_replays += 1
+                    congratulations = True
                 win = True
                 running = False
         if keys[pygame.K_SPACE]:
             user.new_level()
+            if user.level == 4:
+                user.level = 1
+                user.game_replays += 1
+                congratulations = True
             user.caught_cat += cat.number
             win = True
             running = False
@@ -1149,6 +1152,28 @@ def game_over_win(value=False):
         CLOCK.tick(FPS)
 
 
+def congratulations_window():
+    paused = True
+    button = Button(100, 50, active_color=(255, 255, 255), inactive_color=(76, 187, 23))
+    while paused:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+                paused = False
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_a] or keys[pygame.K_d] or keys[pygame.K_w] or keys[pygame.K_s]:
+            paused = False
+
+        pygame.draw.rect(SCREEN, (21, 23, 25), (WIDTH // 2 - 300, HEIGHT // 2 - 80, 600, 230))
+        print_text("YOU PASSED THE GAME.", (124, 252, 0), 60, x=0, y=30, center=True)
+        print_text("IF YOU WANT TO CONTINUE YOU'LL START OVER", (189, 218, 87), 30, x=0, y=-20, center=True)
+        print_text("PRESS ENTER TO CONTINUE", (189, 218, 87), 20, x=0, y=-50, center=True)
+        button.draw(x=WIDTH // 2 - 50, y=HEIGHT // 2 + 75, message='МЕНЮ', action=show_menu, dl_x=15, dl_y=15)
+        pygame.display.update()
+        CLOCK.tick(FPS)
+
+
 def show_menu():
     global from_game
     print(from_game)
@@ -1192,6 +1217,7 @@ def reset():
 
 
 def home_action():
+    global congratulations
     running = True
 
     init_frames('home.txt')
@@ -1243,6 +1269,9 @@ def home_action():
         sprites.update(hero, moving_cube, sprites_, enemy_sprites, cat, luke)
         enemy_sprites.update(camera)
         print_info(hero.home)
+        if congratulations:
+            congratulations_window()
+            congratulations = False
         if keys[pygame.K_ESCAPE]:
             pause()
         if keys[pygame.K_SPACE]:
@@ -1282,5 +1311,6 @@ walk = pygame.mixer.Sound('data/sounds/walk.ogg')
 meow = pygame.mixer.Sound('data/sounds/meow.ogg')
 reloading = pygame.mixer.Sound('data/sounds/reloading.ogg')
 reloading.set_volume(0.3)
+
 show_menu()
 terminate()
