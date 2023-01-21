@@ -592,8 +592,7 @@ class Enemy(pygame.sprite.Sprite):
                     elem[5] = False
                 self.hero.health -= max(self.gun.power - 5, 5)
                 print(f'Hero damaged: {self.hero.health}')
-                if self.hero.health <= 0:
-                    self.fires_list.remove(elem)
+                self.fires_list.remove(elem)
             elif pygame.sprite.spritecollideany(sprite, horizontal_borders) or pygame.sprite.spritecollideany(sprite,
                                                                                                               vertical_borders):
                 self.fires_list.remove(elem)
@@ -1126,7 +1125,7 @@ def game_over_win(value=False):
         pygame.draw.rect(SCREEN, (21, 23, 25), (WIDTH // 2 - 300, HEIGHT // 2 - 80, 600, 230))
         if value is False:
             print_text("YOU LOSE.", (255, 0, 51), 75, x=0, y=30, center=True)
-            print_text("PRESS ENTER TO PLAY AGAIN", (217, 80, 48), 50, x=0, y=-30, center=True)
+            print_text("PRESS ENTER TO RETURN HOME", (217, 80, 48), 50, x=0, y=-30, center=True)
             button_lose.draw(x=WIDTH // 2 - 50, y=HEIGHT // 2 + 75, message='МЕНЮ', action=show_menu, dl_x=15, dl_y=15)
         elif value is True:
             print_text("YOU WIN.", (124, 252, 0), 75, x=0, y=30, center=True)
