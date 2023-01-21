@@ -329,10 +329,6 @@ class Hero(pygame.sprite.Sprite):
                 self.frames = DICT_IMAGES['hero_frames_bag']
         if pygame.sprite.collide_rect(self, luke):
             self.on_the_luke = True
-            if self.catch_cat:
-                print('True')
-            else:
-                print('False')
         else:
             self.on_the_luke = False
         self.move_x = 0
@@ -591,7 +587,6 @@ class Enemy(pygame.sprite.Sprite):
                     shoot.play()
                     elem[5] = False
                 self.hero.health -= max(self.gun.power - 5, 5)
-                print(f'Hero damaged: {self.hero.health}')
                 self.fires_list.remove(elem)
             elif pygame.sprite.spritecollideany(sprite, horizontal_borders) or pygame.sprite.spritecollideany(sprite,
                                                                                                               vertical_borders):
@@ -962,7 +957,6 @@ def main_action():
                                         mousePos['x'] - x)
                     if hero.strike_can:
                         if hero.gun.ammo_now == 0:
-                            print(hero.gun.wait)
                             continue
                         hero.gun.ammo_now -= 1
                         user.ammo_spend += 1
@@ -978,7 +972,6 @@ def main_action():
                         )
                         # sound of shot
                         shoot.play()
-                    print(hero.gun.ammo_now)
 
         # camera
         if hero.gun.ammo_now == 0:
@@ -1084,7 +1077,6 @@ def main_action():
                         person.frames = DICT_IMAGES['death_frames']
                         person.cur_frame = 0
                         user.kills += 1
-                        print('enemy died')
                 firesList.remove(elem)
             elif pygame.sprite.spritecollideany(sprite, horizontal_borders) or pygame.sprite.spritecollideany(sprite,
                                                                                                               vertical_borders):
@@ -1162,7 +1154,6 @@ def congratulations_window():
 # show main menu
 def show_menu():
     global from_game
-    print(from_game)
     if from_game:
         pygame.mixer.music.play(-1)
         from_game = False
