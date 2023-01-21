@@ -999,15 +999,6 @@ def main_action():
                     congratulations = True
                 win = True
                 running = False
-        if keys[pygame.K_SPACE]:
-            user.new_level()
-            if user.level == 4:
-                user.level = 1
-                user.game_replays += 1
-                congratulations = True
-            user.caught_cat += cat.number
-            win = True
-            running = False
         if keys[pygame.K_r]:
             if hero.gun.wait == 0:
                 hero.gun.ammo_now = 0
@@ -1249,9 +1240,6 @@ def home_action():
             congratulations = False
         if keys[pygame.K_ESCAPE]:
             pause()
-        if keys[pygame.K_SPACE]:
-            if pause(True):
-                running = False
         if keys[pygame.K_RETURN]:
             if hero.on_the_luke:
                 if pause(True):
