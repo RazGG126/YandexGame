@@ -7,7 +7,8 @@ import math
 from User import User, levels
 from pygame.sprite import AbstractGroup
 
-# pygame.mixer.pre_init(44100, -16, 1, 512)
+# initialization of important variables
+pygame.mixer.pre_init(44100, -16, 1, 512)
 pygame.init()
 WIDTH = 1000
 HEIGHT = 500
@@ -16,7 +17,6 @@ SCREEN = pygame.display.set_mode(SIZE)
 SCREEN.fill(pygame.Color('black'))
 CLOCK = pygame.time.Clock()
 FPS = 30
-hero_main_frames = []
 ground_sprites = pygame.sprite.Group()
 enemy_sprites = pygame.sprite.Group()
 all_sprites = pygame.sprite.Group()
@@ -26,7 +26,6 @@ sprites = pygame.sprite.Group()
 sprites_ = pygame.sprite.Group()
 unmoving_sprites = pygame.sprite.Group()
 mousePos = {'x': 0, 'y': 0}
-channel_walk = None
 user = None
 hero = None
 cat = None
@@ -34,6 +33,7 @@ luke = None
 congratulations = False
 
 
+# function of loading images
 def load_image(name, colorkey=None):
     fullname = os.path.join('data', name)
     if not os.path.isfile(fullname):
@@ -50,6 +50,7 @@ def load_image(name, colorkey=None):
     return image
 
 
+# dictionary with frames
 DICT_IMAGES = {
     'hero_frames': [load_image(rf'walk\{i}.png') for i in range(1, 7)],
     'enemy_frames': [load_image(rf'walk\enemy.{i}.png') for i in range(1, 7)],
@@ -71,6 +72,7 @@ DICT_IMAGES = {
 }
 
 
+# function of loading <<user>> statistics
 def load_json():
     global user
     data = json.load(open('user.json', 'r', encoding='utf-8'))
@@ -83,6 +85,7 @@ def load_json():
 load_json()
 
 
+# function of saving <<user>> statistics
 def dump_json():
     global user
     data = user.create_dict()
@@ -90,6 +93,7 @@ def dump_json():
     json.dump(data, open('user.json', 'w', encoding='utf-8'))
 
 
+# <<gun>> class
 class Gun(pygame.sprite.Sprite):
     def __init__(self, power, ammo, gun_image, *groups: AbstractGroup):
         super().__init__(*groups)
@@ -103,8 +107,9 @@ class Gun(pygame.sprite.Sprite):
         self.wait_max = 100
 
 
+# <<cat>> class
 class Cat(pygame.sprite.Sprite):
-    def __init__(self,x, y, frames, static=False, number='1', *groups: AbstractGroup):
+    def __init__(self, x, y, frames, static=False, number='1', *groups: AbstractGroup):
         super().__init__(all_sprites, *groups)
         self.frames = frames
         self.cur_frame = 0
@@ -125,6 +130,7 @@ class Cat(pygame.sprite.Sprite):
         self.static = static
 
     def sound_meow(self, hero):
+        # lodig of sound <<meow>>
         if not hero.catch_cat:
             dl_x = self.rect.x - hero.rect.x
             dl_y = self.rect.y - hero.rect.y
@@ -154,7 +160,8 @@ class Cat(pygame.sprite.Sprite):
         self.update_frame()
 
 
-class HeroMain(pygame.sprite.Sprite):
+# <<hero>> class
+class Hero(pygame.sprite.Sprite):
     def __init__(self, x, y, gun, frames, *groups: AbstractGroup):
         super().__init__(all_sprites, *groups)
         self.frames = frames
@@ -183,7 +190,7 @@ class HeroMain(pygame.sprite.Sprite):
         self.move_x = 0
         self.move_y = 0
 
-        self.gun = gun  # class
+        self.gun = gun  # <<gun>> class
         self.gun_image = gun.image
         self.strike_can = True
 
@@ -191,10 +198,9 @@ class HeroMain(pygame.sprite.Sprite):
         self.count_reloading = 0
 
         self.home = False
-    # def rotate(self):
-    #     self.image = pygame.transform.rotate(self.image, 360 - self.angle)
 
     def sound_walk(self):
+        # logic of sound <<walk>>
         if self.moving:
             if self.count_walk == 10:
                 self.was_walk = False
@@ -219,29 +225,32 @@ class HeroMain(pygame.sprite.Sprite):
             self.image = pygame.transform.flip(self.frames[self.cur_frame // 4], True, False)
         elif self.moving_right:
             self.image = self.frames[self.cur_frame // 4]
-        # self.rotate()
 
     def move_gun(self):
         if self.moving_left:
+            # function of centering character's weapon
             self.gun.image = pygame.transform.flip(self.gun_image, True, False)
             self.gun.image = pygame.transform.rotate(self.gun.image, -90)
             if self.angle <= -80:
                 self.strike_can = True
                 self.gun.image = pygame.transform.rotate(self.gun.image, 360 - (self.angle + 90))
                 SCREEN.blit(self.gun.image, (self.rect.x - 20,
-                                             (self.rect.y + self.image.get_size()[1] // 2  - (90 + (self.angle + 90)) // 4)))
+                                             (self.rect.y + self.image.get_size()[1] // 2 - (
+                                                     90 + (self.angle + 90)) // 4)))
             elif 90 <= self.angle <= 180:
                 self.strike_can = True
                 self.gun.image = pygame.transform.rotate(self.gun.image, 360 - (self.angle + 90))
-                SCREEN.blit(self.gun.image, ((self.rect.x - 20) - 1 * (self.angle - 180) // 4 ,
-                                             (self.rect.y + self.image.get_size()[1] // 2 + 1 * (self.angle - 180) // 4)))
+                SCREEN.blit(self.gun.image, ((self.rect.x - 20) - 1 * (self.angle - 180) // 4,
+                                             (self.rect.y + self.image.get_size()[1] // 2 + 1 * (
+                                                     self.angle - 180) // 4)))
             else:
                 self.strike_can = False
                 self.gun.image = pygame.transform.flip(self.gun_image, True, False)
-                SCREEN.blit(self.gun.image, (self.rect.x -  20,
+                SCREEN.blit(self.gun.image, (self.rect.x - 20,
                                              (self.rect.y + self.image.get_size()[1] // 2)))
 
         elif self.moving_right:
+            # function of centering character's weapon
             self.gun.image = self.gun_image
             self.gun.image = pygame.transform.rotate(self.gun.image, 360 - self.angle)
             if -55 <= self.angle < 0:
@@ -260,18 +269,18 @@ class HeroMain(pygame.sprite.Sprite):
                 self.strike_can = False
                 self.gun.image = self.gun_image
                 SCREEN.blit(self.gun.image, (self.rect.x,
-                                         (self.rect.y + self.image.get_size()[1] // 2)))
-            # self.gun.rect.x = self.rect.x
-            # self.gun.rect.y = self.rect.y + self.image.get_size()[1] // 2
+                                             (self.rect.y + self.image.get_size()[1] // 2)))
 
     def update(self, cube, cube_2, sprites, enemy_sprites, cat, luke):
         global user
+        # logic of moving and collision with different sprites
         if not self.home:
             self.move_gun()
         self.rect.x += self.move_x
         self.rect.y += self.move_y
 
-        if (not pygame.sprite.spritecollideany(self, horizontal_borders)) and (not pygame.sprite.spritecollideany(self, vertical_borders)):
+        if (not pygame.sprite.spritecollideany(self, horizontal_borders)) and (
+                not pygame.sprite.spritecollideany(self, vertical_borders)):
             self.rect.x -= self.move_x
             self.rect.y -= self.move_y
             self.rect.x += self.move_x
@@ -361,12 +370,8 @@ class Enemy(pygame.sprite.Sprite):
         self.move_x_v = 2
         self.move_y_v = 2
 
-        self.gun = gun  # class
-        # self.gun.wait_max *= 10
-        # self.ammo_now = 5 # self.gun.ammo_now
-        # self.ammo = 5 # self.gun.ammo
-        # self.wait = 0
-        # self.wait_max = self.gun.wait_max
+        self.gun = gun  # <<gun>> class
+
         self.gun_image = gun.image
 
         self.count = 0
@@ -400,11 +405,10 @@ class Enemy(pygame.sprite.Sprite):
                 self.image = self.frames[self.cur_frame // 4]
 
     def update(self, camera):
-        # self.reload()
         if not self.dead:
             self.move_gun(camera)
             if self.moving:
-
+                # logic of moving
                 dl_x = self.hero.rect.x - self.rect.x
                 dl_y = self.hero.rect.y - self.rect.y
 
@@ -472,9 +476,8 @@ class Enemy(pygame.sprite.Sprite):
                     repeat = False  # отрисовка пуль без повторов
                 if (((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5) < self.stop_distance:
                     self.moving = False
-                #
-                # if (((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5) < (self.strike_distance - 150):
-                #     self.moving = False
+
+                # function of centering character's weapon
 
                 angleR = math.atan2(y_hero - y,
                                     x_hero - x)
@@ -486,20 +489,17 @@ class Enemy(pygame.sprite.Sprite):
                     self.gun.image = pygame.transform.rotate(self.gun.image, 360 - (self.angle + 90))
                     SCREEN.blit(self.gun.image, (self.rect.x - 20,
                                                  (self.rect.y + self.image.get_size()[1] // 2 - (
-                                                             90 + (self.angle + 90)) // 4)))
+                                                         90 + (self.angle + 90)) // 4)))
                 elif 90 <= self.angle <= 180:
                     self.gun.image = pygame.transform.rotate(self.gun.image, 360 - (self.angle + 90))
                     SCREEN.blit(self.gun.image, ((self.rect.x - 20) - 1 * (self.angle - 180) // 4,
                                                  (self.rect.y + self.image.get_size()[1] // 2 + 1 * (
-                                                             self.angle - 180) // 4)))
+                                                         self.angle - 180) // 4)))
+                # it's need to solve the problem with repeating shots
                 if repeat:
                     self.fire(x, y, x_hero, y_hero, camera)
             else:
                 self.fire(x, y, x_hero, y_hero, camera)
-            # else:
-            #     self.gun.image = pygame.transform.flip(self.gun_image, True, False)
-            #     SCREEN.blit(self.gun.image, (self.rect.x,
-            #                                  (self.rect.y + self.image.get_size()[1] // 2)))
 
         elif self.moving_right:
             repeat = True
@@ -507,10 +507,11 @@ class Enemy(pygame.sprite.Sprite):
                 if (((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5) < (self.strike_distance - 100):
                     self.moving = True
                     self.fire(x, y, x_hero, y_hero, camera, True)
-                    repeat = False #отрисовка пуль без повторов
+                    repeat = False  # отрисовка пуль без повторов
                 if (((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5) < self.stop_distance:
-                    self.moving =  False
+                    self.moving = False
 
+                # function of centering character's weapon
                 angleR = math.atan2(y_hero - y,
                                     x_hero - x)
                 self.angle = angleR * 180 / math.pi
@@ -530,36 +531,24 @@ class Enemy(pygame.sprite.Sprite):
                     self.fire(x, y, x_hero, y_hero, camera)
             else:
                 self.fire(x, y, x_hero, y_hero, camera)
-            # els
-            #     self.gun.image = self.gun_image
-            #     SCREEN.blit(self.gun.image, (self.rect.x,
-            #                                  (self.rect.y + self.image.get_size()[1] // 2)))
 
-    def fire(self,x, y, x_2, y_2, camera, status=False):
+    def fire(self, x, y, x_2, y_2, camera, status=False):
         if status:
             self.count += 1
+            # 15 - it's the speed of shooting. The higher the number, the slower the shooting
             if self.count % 15 == 0:
                 self.count = 0
-                # if self.ammo_now != 0:
-                #     self.ammo_now -= 1
-                # dl_x = self.rect.x - self.hero.rect.x
-                # dl_y = self.rect.y - self.hero.rect.y
-                #
-                # if (dl_x ** 2 + dl_y ** 2) ** 0.5 > 75:
-                #     pygame.mixer.Sound('data/sounds/shoot.ogg').play()
                 self.fires_list.append(
-                                [
-                                    math.atan2(y_2 - y,
-                                                x_2 - x),
-                                    x - 10,
-                                    y,
-                                    x,
-                                    y,
-                                    True
-                                ]
-                            )
-                # else:
-                #     print(self.wait, 'Перезарядка')
+                    [
+                        math.atan2(y_2 - y,
+                                   x_2 - x),
+                        x - 10,
+                        y,
+                        x,
+                        y,
+                        True
+                    ]
+                )
         for x, elem in enumerate(self.fires_list):
             sX = math.cos(elem[0]) * 20
             sY = math.sin(elem[0]) * 20
@@ -597,14 +586,14 @@ class Enemy(pygame.sprite.Sprite):
             if (x_ ** 2 + y_ ** 2) ** 0.5 > 320:
                 self.fires_list.remove(elem)
             elif pygame.sprite.collide_rect(sprite, self.hero):
+                # logic of shot's sound
                 if elem[5]:
                     shoot.play()
                     elem[5] = False
                 self.hero.health -= max(self.gun.power - 5, 5)
                 print(f'Hero damaged: {self.hero.health}')
                 if self.hero.health <= 0:
-                    print('hero died')
-                self.fires_list.remove(elem)
+                    self.fires_list.remove(elem)
             elif pygame.sprite.spritecollideany(sprite, horizontal_borders) or pygame.sprite.spritecollideany(sprite,
                                                                                                               vertical_borders):
                 self.fires_list.remove(elem)
@@ -618,6 +607,7 @@ class Enemy(pygame.sprite.Sprite):
                 SCREEN.blit(image, [elem[1], elem[2]])
 
 
+# <<groundtexture>> class. Bacground texture in the game
 class GroundTexture(pygame.sprite.Sprite):
     def __init__(self, tile_type, pos_x, pos_y):
         super().__init__(ground_sprites, all_sprites)
@@ -628,6 +618,7 @@ class GroundTexture(pygame.sprite.Sprite):
             self.width * pos_x, self.height * pos_y)
 
 
+# <<cube>> class
 class Cube(pygame.sprite.Sprite):
     def __init__(self, width, height, x, y, image=DICT_IMAGES['box'], type=None, *groups: AbstractGroup):
         super().__init__(all_sprites, *groups)
@@ -653,9 +644,11 @@ class Cube(pygame.sprite.Sprite):
         self.rect.y += move_y
 
 
+# <<moving_cube>> - it's the cube with texture of a big stone which you can move.
 moving_cube = None
 
 
+# <<border>> class. (game map border)
 class Border(pygame.sprite.Sprite):
     # строго вертикальный или строго горизонтальный отрезок
     def __init__(self, x1, y1, x2, y2, pos):
@@ -680,9 +673,11 @@ class Border(pygame.sprite.Sprite):
                 self.rect = pygame.Rect(x1, y1 + 60, x2 - x1, 50)
 
 
+# initialization of weapon
 ak47 = Gun(power=15, ammo=30, gun_image='gun.png')
 
 
+# <<button>> class
 class Button:
     def __init__(self, width, height, inactive_color, active_color):
         self.width = width
@@ -705,6 +700,7 @@ class Button:
             print_text(text=message, color=self.active_color, x=x + dl_x, y=y + dl_y, font=font_size)
 
 
+# <<camera>> class
 class Camera:
     # зададим начальный сдвиг камеры
     def __init__(self):
@@ -725,6 +721,7 @@ class Camera:
         self.dy = -(target.rect.y + target.rect.h // 2 - HEIGHT // 2)
 
 
+# one of the main fuctions which places game objects.
 def init_frames(map):
     global moving_cube, hero, cat, luke
 
@@ -798,18 +795,13 @@ def init_frames(map):
             sprites.add(cat)
 
     for elem in hero_l:
-        hero = HeroMain(elem[0], elem[1], gun=ak47, frames=DICT_IMAGES['hero_frames'])
+        hero = Hero(elem[0], elem[1], gun=ak47, frames=DICT_IMAGES['hero_frames'])
         sprites.add(hero)
 
     for elem in enemies:
         enemy = Enemy(elem[0], elem[1], gun=ak47,
                       frames=DICT_IMAGES['enemy_frames'], hero=hero)
         enemy_sprites.add(enemy)
-
-    # for elem in ground:
-    #     cube = Cube(width=50, height=50, x=elem[0], y=elem[1],
-    #                 image=DICT_IMAGES['ground_stone'] if elem[2] == 6 else DICT_IMAGES['ground_sand'])
-    #     sprites.add(cube)
 
     for elem in boxes:
         cube = Cube(width=50, height=50, x=elem[0], y=elem[1],
@@ -824,6 +816,7 @@ def init_frames(map):
         unmoving_sprites.add(moving_cube)
 
 
+# function of printing a text
 def print_text(text, color, font, x=None, y=None, center=False):
     font = pygame.font.Font(None, font)
     text = font.render(text, True, color)
@@ -839,12 +832,14 @@ def print_text(text, color, font, x=None, y=None, center=False):
     SCREEN.blit(text, (text_x, text_y))
 
 
+# function of exit
 def terminate():
-    dump_json()
+    dump_json()  # save statistics
     pygame.quit()
     sys.exit()
 
 
+# show <<user>> statistics
 def show_stat():
     paused = True
     btn = Button(150, 50, active_color=(255, 255, 255), inactive_color=(255, 202, 134))
@@ -867,6 +862,7 @@ def show_stat():
         CLOCK.tick(FPS)
 
 
+# function of pause in the game
 def pause(value=False):
     paused = True
     button = Button(100, 50, active_color=(255, 255, 255), inactive_color=(229, 190, 1))
@@ -883,8 +879,6 @@ def pause(value=False):
             if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 pause_ = True
                 paused = False
-        # 21,23,25
-        #27, 17, 22
         if value:
             keys = pygame.key.get_pressed()
             if keys[pygame.K_a] or keys[pygame.K_d] or keys[pygame.K_w] or keys[pygame.K_s]:
@@ -909,31 +903,28 @@ def pause(value=False):
     return False
 
 
+# function to print <<user>> info
 def print_info(home):
     font = pygame.font.SysFont('monserat', 25)
-    text = font.render("Hero health:", True, pygame.Color(127,255,0))
+    text = font.render("Hero health:", True, pygame.Color(127, 255, 0))
     text_x = WIDTH // 2 - text.get_width() // 2 - 55
     text_y = HEIGHT - text.get_height()
     text_w = text.get_width()
     text_h = text.get_height()
-    # pygame.draw.rect(SCREEN, pygame.Color('black'), (WIDTH // 2 - text.get_width() // 2 - 62, HEIGHT - 20,
-    #                                                  text.get_width() + 120, 20))
-    pygame.draw.rect(SCREEN, pygame.Color(127,255,0), (WIDTH // 2, HEIGHT - text.get_height() + 4, abs(hero.health), 10))
-    # pygame.draw.rect(SCREEN, pygame.Color('black'), (0, HEIGHT - text.get_height(),
-    #                                                  text.get_width(), 20))
+    pygame.draw.rect(SCREEN, pygame.Color(127, 255, 0),
+                     (WIDTH // 2, HEIGHT - text.get_height() + 4, abs(hero.health), 10))
     if not home:
         print_text(F'Ammo: {hero.gun.ammo_now}', color=(243, 165, 5), x=0, y=HEIGHT - text.get_height(), font=25)
     if hero.gun.wait != 0:
-        # pygame.draw.rect(SCREEN, pygame.Color('black'), (0, HEIGHT - text.get_height(),
-        #                                                  text.get_width() + 120, 20))
         print_text(F'reloading: {hero.gun.wait}%', color=(243, 165, 5), x=100, y=HEIGHT - text.get_height(), font=25)
     pygame.draw.rect(SCREEN, pygame.Color(127, 255, 0),
                      (WIDTH // 2, HEIGHT - text.get_height() + 4, abs(hero.health), 10))
     SCREEN.blit(text, (text_x, text_y))
 
 
+# one of the main functions. level function
 def main_action():
-    global channel_walk, congratulations
+    global congratulations
     running = True
 
     init_frames(levels[user.level - 1])
@@ -976,6 +967,7 @@ def main_action():
                             continue
                         hero.gun.ammo_now -= 1
                         user.ammo_spend += 1
+                        # added a shot to list
                         firesList.append(
                             [
                                 angleR,
@@ -985,16 +977,17 @@ def main_action():
                                 y
                             ]
                         )
+                        # sound of shot
                         shoot.play()
                     print(hero.gun.ammo_now)
 
-        #camera
+        # camera
         if hero.gun.ammo_now == 0:
             if not hero.reloading:
                 hero.reloading = True
                 reloading.play()
             hero.gun.wait += 1
-            # print(hero.gun.wait)
+            # reload_function
             if hero.gun.wait_max == hero.gun.wait:
                 hero.gun.ammo_now = hero.gun.ammo
                 hero.gun.wait = 0
@@ -1046,21 +1039,12 @@ def main_action():
         hero.sound_walk()
         cat.sound_meow(hero)
 
-        # if hero.moving:
-        #     if hero.count_walk == 10:
-        #         hero.was_walk = False
-        #         hero.count_walk = 0
-        #     if not hero.was_walk:
-        #         walk.play()
-        #         hero.was_walk = True
-        #     else:
-        #         hero.count_walk += 1
-
         ground_sprites.draw(SCREEN)
         sprites.draw(SCREEN)
         enemy_sprites.draw(SCREEN)
         sprites.update(hero, moving_cube, sprites_, enemy_sprites, cat, luke)
         enemy_sprites.update(camera)
+        # drawing shooting
         for elem in firesList:
             sX = math.cos(elem[0]) * 30
             sY = math.sin(elem[0]) * 30
@@ -1084,7 +1068,7 @@ def main_action():
             sprite = pygame.sprite.Sprite()
 
             image = pygame.Surface((2 * 5, 2 * 5),
-                                    pygame.SRCALPHA, 32)
+                                   pygame.SRCALPHA, 32)
             sprite.image = image
             sprite.rect = sprite.image.get_rect()
             sprite.rect.x = elem[1]
@@ -1103,13 +1087,14 @@ def main_action():
                         user.kills += 1
                         print('enemy died')
                 firesList.remove(elem)
-            elif pygame.sprite.spritecollideany(sprite, horizontal_borders) or pygame.sprite.spritecollideany(sprite, vertical_borders):
+            elif pygame.sprite.spritecollideany(sprite, horizontal_borders) or pygame.sprite.spritecollideany(sprite,
+                                                                                                              vertical_borders):
                 firesList.remove(elem)
             elif pygame.sprite.spritecollideany(sprite, sprites_) or pygame.sprite.collide_rect(sprite, moving_cube):
                 firesList.remove(elem)
             else:
                 pygame.draw.circle(image, pygame.Color("orange"),
-                               (5, 5), 5)
+                                   (5, 5), 5)
             if (x_ ** 2 + y_ ** 2) ** 0.5 > 50:
                 SCREEN.blit(image, [elem[1], elem[2]])
         print_info(hero.home)
@@ -1125,6 +1110,7 @@ def main_action():
     return game_over_win()
 
 
+# window which shows when you lose or win
 def game_over_win(value=False):
     stopped = True
     button_lose = Button(100, 50, active_color=(255, 255, 255), inactive_color=(180, 76, 67))
@@ -1143,7 +1129,6 @@ def game_over_win(value=False):
             print_text("PRESS ENTER TO PLAY AGAIN", (217, 80, 48), 50, x=0, y=-30, center=True)
             button_lose.draw(x=WIDTH // 2 - 50, y=HEIGHT // 2 + 75, message='МЕНЮ', action=show_menu, dl_x=15, dl_y=15)
         elif value is True:
-            #124, 252, 0
             print_text("YOU WIN.", (124, 252, 0), 75, x=0, y=30, center=True)
             print_text("PRESS ENTER TO CONTINUE", (189, 218, 87), 50, x=0, y=-30, center=True)
             button_win.draw(x=WIDTH // 2 - 50, y=HEIGHT // 2 + 75, message='МЕНЮ', action=show_menu, dl_x=15, dl_y=15)
@@ -1152,6 +1137,7 @@ def game_over_win(value=False):
         CLOCK.tick(FPS)
 
 
+# window which shows when you passed the game
 def congratulations_window():
     paused = True
     button = Button(100, 50, active_color=(255, 255, 255), inactive_color=(76, 187, 23))
@@ -1174,6 +1160,7 @@ def congratulations_window():
         CLOCK.tick(FPS)
 
 
+# show main menu
 def show_menu():
     global from_game
     print(from_game)
@@ -1199,11 +1186,11 @@ def show_menu():
         CLOCK.tick(FPS)
 
 
+# function of resetting values the variables
 def reset():
-    global hero_main_frames, ground_sprites, \
+    global ground_sprites, \
         enemy_sprites, all_sprites, vertical_borders, \
         horizontal_borders, sprites, sprites_, unmoving_sprites, mousePos, ak47
-    hero_main_frames = []
     ground_sprites = pygame.sprite.Group()
     enemy_sprites = pygame.sprite.Group()
     all_sprites = pygame.sprite.Group()
@@ -1216,6 +1203,7 @@ def reset():
     ak47 = Gun(power=15, ammo=30, gun_image='gun.png')
 
 
+# one of the main functions. home level function
 def home_action():
     global congratulations
     running = True
@@ -1239,10 +1227,7 @@ def home_action():
         camera.update(hero)
         for sprite in all_sprites:
             camera.apply(sprite)
-        #
-        # if len(enemy_sprites) == 0:
-        #     win = True
-        #     running = False
+
         keys = pygame.key.get_pressed()
         if keys[pygame.K_a]:
             hero.moving = True
@@ -1286,6 +1271,7 @@ def home_action():
     return game_over_win('access')
 
 
+# the main function which starts the game
 def start_game():
     global from_game
     from_game = True
