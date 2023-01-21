@@ -467,7 +467,7 @@ class Enemy(pygame.sprite.Sprite):
                 if (((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5) < (self.strike_distance - 100):
                     self.moving = True
                     self.fire(x, y, x_hero, y_hero, camera, True)
-                    repeat = False #отрисовка пуль без повторов
+                    repeat = False  # отрисовка пуль без повторов
                 if (((x_hero - x) ** 2 + (y_hero - y) ** 2) ** 0.5) < self.stop_distance:
                     self.moving = False
                 #
