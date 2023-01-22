@@ -917,9 +917,14 @@ def pause(value=False):
                 paused = False
         if value:
             keys = pygame.key.get_pressed()
-            if keys[pygame.K_a] or keys[pygame.K_d] or keys[pygame.K_w] or keys[pygame.K_s]:
-                paused = False
-                play = False
+            if user.control:
+                if keys[pygame.K_a] or keys[pygame.K_d] or keys[pygame.K_w] or keys[pygame.K_s]:
+                    paused = False
+                    play = False
+            else:
+                if keys[pygame.K_UP] or keys[pygame.K_DOWN] or keys[pygame.K_LEFT] or keys[pygame.K_RIGHT]:
+                    paused = False
+                    play = False
 
         pygame.draw.rect(SCREEN, (21, 23, 25), (WIDTH // 2 - 300, HEIGHT // 2 - 80, 600, 230))
         if not value:
@@ -1233,6 +1238,7 @@ def show_setting_menu():
         btn.draw(WIDTH // 2 - 75, HEIGHT // 2 + 150, dl_x=45, dl_y=18, message='BACK', action=show_menu, font_size=30)
         pygame.display.flip()
         CLOCK.tick(FPS)
+
 
 # window which shows when you passed the game
 def congratulations_window():
