@@ -65,7 +65,7 @@ DICT_IMAGES = {
     'death_frames': [load_image(rf'death\{i}.png') for i in range(1, 8)],
     'ak47': load_image(r'weapon\ak47.png'),
     'm4a1': load_image(r'weapon\m4a1.png'),
-    'menu_bg': load_image(r'textures\menu_bg.jpg'),
+    'menu_bg': load_image(r'textures\bg-menu.png'),
     'ground_ender': load_image(r'ground\ender_block.png'),
     'stone_block': load_image(r'textures\stone_block.png'),
     'cat1': [load_image(r'sprites\cats\murzik\cat.png'), load_image(r'sprites\cats\murzik\cat_2.png'),
@@ -1188,6 +1188,7 @@ def show_menu():
 
     btn = Button(200, 100, active_color=(255, 255, 255), inactive_color=(0, 0, 0))
     settings_btn = Button(150, 50, active_color=(255, 255, 255), inactive_color=(0, 0, 0))
+    dl_x = -50
     show = True
     while show:
         for event in pygame.event.get():
@@ -1195,10 +1196,10 @@ def show_menu():
                 terminate()
 
         SCREEN.blit(menu_background, (0, 0))
-        btn.draw(150, 80, dl_x=35, dl_y=25, message='PLAY.', action=start_game, font_size=70)
-        settings_btn.draw(175, 205, dl_x=25, dl_y=18, message='SETTINGS.', font_size=30)
-        settings_btn.draw(175, 280, dl_x=40, dl_y=18, message='STATА.', action=show_stat, font_size=30)
-        settings_btn.draw(175, 355, dl_x=50, dl_y=18, message='EXIT.', action=terminate, font_size=30)
+        btn.draw(150 + dl_x, 80, dl_x=35, dl_y=25, message='PLAY.', action=start_game, font_size=70)
+        settings_btn.draw(175 + dl_x, 205, dl_x=25, dl_y=18, message='SETTINGS.', font_size=30)
+        settings_btn.draw(175 + dl_x, 280, dl_x=40, dl_y=18, message='STATА.', action=show_stat, font_size=30)
+        settings_btn.draw(175 + dl_x, 355, dl_x=50, dl_y=18, message='EXIT.', action=terminate, font_size=30)
         pygame.display.update()
         CLOCK.tick(FPS)
 
