@@ -30,6 +30,7 @@ user = None
 hero = None
 cat = None
 luke = None
+lamp = False
 congratulations = False
 
 
@@ -52,9 +53,15 @@ def load_image(name, colorkey=None):
 
 # dictionary with frames
 DICT_IMAGES = {
-    'hero_frames': [load_image(rf'walk\{i}.png') for i in range(1, 7)],
-    'enemy_frames': [load_image(rf'walk\enemy.{i}.png') for i in range(1, 7)],
-    'hero_frames_bag': [load_image(rf'walk\{i}.{i}.png') for i in range(1, 7)],
+    'hero_frames_default': [load_image(rf'walk\default\{i}.png') for i in range(1, 7)],
+    'hero_frames_colorit': [load_image(rf'walk\colorit\{i}.png') for i in range(1, 7)],
+    'hero_frames_extra_pink': [load_image(rf'walk\extra_pink\{i}.png') for i in range(1, 7)],
+    'hero_frames_radiation': [load_image(rf'walk\radiation\{i}.png') for i in range(1, 7)],
+    'enemy_frames': [load_image(rf'walk\enemy_skin\enemy.{i}.png') for i in range(1, 7)],
+    'hero_frames_default_bag': [load_image(rf'walk\default\{i}.{i}.png') for i in range(1, 7)],
+    'hero_frames_colorit_bag': [load_image(rf'walk\colorit\{i}.{i}.png') for i in range(1, 7)],
+    'hero_frames_extra_pink_bag': [load_image(rf'walk\extra_pink\{i}.{i}.png') for i in range(1, 7)],
+    'hero_frames_radiation_bag': [load_image(rf'walk\radiation\{i}.{i}.png') for i in range(1, 7)],
     'death_frames': [load_image(rf'death\{i}.png') for i in range(1, 8)],
     'menu_bg': load_image('menu_bg.jpg'),
     'ground_ender': load_image(r'ground\ender_block.png'),
@@ -68,7 +75,8 @@ DICT_IMAGES = {
     'ground_stone': load_image('ground_stone.jpg'),
     'bush': load_image('bush_mine.png'),
     'branch': load_image('branch.png'),
-    'luke': load_image('luke.png')
+    'luke': load_image('luke.png'),
+    'lamp': load_image('glowstone.png'),
 }
 
 
@@ -77,7 +85,7 @@ def load_json():
     global user
     data = json.load(open('user.json', 'r', encoding='utf-8'))
     user = User(level=data['level'], coins=data['coins'],
-                skin=data['skin'], kills=data['kills'],
+                skin=data['skin'], skins_have=data['skins_have'], kills=data['kills'],
                 restarts=data['restarts'], game_replays=data['game_replays'], ammo_spend=data['ammo_spend'],
                 caught_cat=data['caught_cat'])
 
@@ -326,7 +334,7 @@ class Hero(pygame.sprite.Sprite):
                     user.caught_cat += cat.number
                 cat.kill()
                 self.catch_cat = True
-                self.frames = DICT_IMAGES['hero_frames_bag']
+                self.frames = DICT_IMAGES[f'hero_frames_{user.skin}_bag']
         if pygame.sprite.collide_rect(self, luke):
             self.on_the_luke = True
         else:
@@ -679,7 +687,7 @@ class Button:
         self.inactive_color = inactive_color
         self.active_color = active_color
 
-    def draw(self, x, y, message, dl_x=10, dl_y=10, action=None, font_size=30):
+    def draw(self, x, y, message, dl_x=10, dl_y=10, action=None, font_size=30, skin=None, price=None, buy=None):
         mouse = pygame.mouse.get_pos()
         click = pygame.mouse.get_pressed()
 
@@ -687,7 +695,13 @@ class Button:
             pygame.draw.rect(SCREEN, self.active_color, (x, y, self.width, self.height))
             print_text(text=message, color=self.inactive_color, x=x + 10, y=y + 10, font=font_size)
             if click[0] == 1 and action is not None:
-                action()
+                if buy is not None:
+                    if buy:
+                        action(skin, price)
+                    else:
+                        action(skin)
+                else:
+                    action()
 
         else:
             pygame.draw.rect(SCREEN, self.inactive_color, (x, y, self.width, self.height))
@@ -717,7 +731,7 @@ class Camera:
 
 # one of the main fuctions which places game objects.
 def init_frames(map):
-    global moving_cube, hero, cat, luke
+    global moving_cube, hero, cat, luke, lamp
 
     for y in range((2000 // 86) + 1):
         for x in range((2000 // 86) + 1):
@@ -743,6 +757,7 @@ def init_frames(map):
     hero_l = []
     cat_l = []
     luke_l = []
+    lamp_l = []
 
     for row in range(len(world)):
         for col in range(len(world[row])):
@@ -762,6 +777,8 @@ def init_frames(map):
                 cat_l.append((x, y))
             elif world[row][col] == 'l':
                 luke_l.append((x, y))
+            elif world[row][col] == 'w':
+                lamp_l.append((x, y))
 
     for elem in ground:
         image = DICT_IMAGES['ground_sand']
@@ -778,6 +795,10 @@ def init_frames(map):
         luke = Cube(width=80, height=80, x=elem[0], y=elem[1], image=DICT_IMAGES['luke'])
         sprites.add(luke)
 
+    for elem in lamp_l:
+        lamp = Cube(width=80, height=80, x=elem[0], y=elem[1], image=DICT_IMAGES['lamp'])
+        sprites.add(lamp)
+
     if len(cat_l) == 0:
         if not user.caught_cat is None:
             for x, i in enumerate(user.caught_cat, 0):
@@ -789,7 +810,7 @@ def init_frames(map):
             sprites.add(cat)
 
     for elem in hero_l:
-        hero = Hero(elem[0], elem[1], gun=ak47, frames=DICT_IMAGES['hero_frames'])
+        hero = Hero(elem[0], elem[1], gun=ak47, frames=DICT_IMAGES['hero_frames_' + user.skin])
         sprites.add(hero)
 
     for elem in enemies:
@@ -1167,6 +1188,66 @@ def show_menu():
         CLOCK.tick(FPS)
 
 
+def use_skin(skin):
+    user.skin = skin
+    hero.frames = DICT_IMAGES['hero_frames_' + user.skin]
+
+
+def buy_skin(skin, price):
+    if user.coins >= price:
+        user.coins -= price
+        user.skins_have.append(skin)
+
+
+def shop_menu():
+    show = True
+    #for skins
+    buy_default = Button(80, 35, active_color=(255, 255, 255), inactive_color='green')
+    dl_x = 20
+    dl_y = 100
+    while show:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+                show = False
+        SCREEN.fill((0, 0, 0))
+        print_text(f'COINS: {user.coins}', color='gold', font=35, x=425, y=58)
+        #skins
+        print_text('SKINS', color=(255, 255, 255), font=50, x=150, y=50)
+        SCREEN.blit(DICT_IMAGES['hero_frames_default'][0], (100, 100))
+        print_text("default", color=(255, 255, 255), font=20, x=100, y=168)
+        print_text('price: 0', color=(255, 255, 255), font=30, x=150, y=130)
+        buy_default.draw(x=250, y=120, message='BUY' if 'default' not in user.skins_have else 'USE',
+                         font_size=24, action=buy_skin if 'default' not in user.skins_have else use_skin,
+                         skin='default', buy=True if 'default' not in user.skins_have else False)
+
+        SCREEN.blit(DICT_IMAGES['hero_frames_colorit'][0], (100, 100 + dl_y))
+        print_text("colorit", color=(255, 255, 255), font=20, x=100, y=168 + dl_y)
+        print_text('price: 5', color=(255, 255, 255), font=30, x=150, y=130 + dl_y)
+        buy_default.draw(x=250, y=120 + dl_y, message='BUY' if 'colorit' not in user.skins_have else 'USE',
+                         font_size=24, action=buy_skin if 'colorit' not in user.skins_have else use_skin,
+                         skin='colorit', price=5, buy=True if 'colorit' not in user.skins_have else False)
+
+        SCREEN.blit(DICT_IMAGES['hero_frames_radiation'][0], (100, 100 + dl_y * 2))
+        print_text("radiation", color=(255, 255, 255), font=20, x=98, y=168 + dl_y * 2)
+        print_text('price: 10', color=(255, 255, 255), font=30, x=150, y=130 + dl_y * 2)
+        buy_default.draw(x=250, y=120 + dl_y * 2, message='BUY' if 'radiation' not in user.skins_have else 'USE',
+                         font_size=24, action=buy_skin if 'radiation' not in user.skins_have else use_skin,
+                         skin='radiation', price=10, buy=True if 'radiation' not in user.skins_have else False)
+
+        SCREEN.blit(DICT_IMAGES['hero_frames_extra_pink'][0], (100, 100 + dl_y * 3))
+        print_text("extra pink", color=(255, 255, 255), font=20, x=95, y=168 + dl_y * 3)
+        print_text('price: 7', color=(255, 255, 255), font=30, x=150, y=130 + dl_y * 3)
+        buy_default.draw(x=250, y=120 + dl_y * 3, message='BUY' if 'extra_pink' not in user.skins_have else 'USE',
+                         font_size=24, action=buy_skin if 'extra_pink' not in user.skins_have else use_skin,
+                         skin='extra_pink', price=7, buy=True if 'extra_pink' not in user.skins_have else False)
+        #weapon
+        print_text('WEAPON', color=(255, 255, 255), font=50, x=700, y=50)
+        print_text('PRESS ENTER TO EXIT', color=(255, 255, 255), font=20, x=WIDTH // 2 - 78, y=HEIGHT - 40)
+        CLOCK.tick(FPS)
+        pygame.display.flip()
+
 # function of resetting values the variables
 def reset():
     global ground_sprites, \
@@ -1210,6 +1291,9 @@ def home_action():
             camera.apply(sprite)
 
         keys = pygame.key.get_pressed()
+        if keys[pygame.K_e]:
+            if pygame.sprite.collide_rect(hero, lamp):
+                shop_menu()
         if keys[pygame.K_a]:
             hero.moving = True
             hero.moving_left = True

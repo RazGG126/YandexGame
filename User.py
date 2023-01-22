@@ -2,10 +2,11 @@ levels = ['game_map.txt', 'game_map_2.txt', 'game_map_3.txt']
 
 
 class User:
-    def __init__(self,level, coins, skin=None, kills=0, restarts=0, game_replays=0, ammo_spend=0, caught_cat=''):
+    def __init__(self,level, coins, skin='default', skins_have=['default'], kills=0, restarts=0, game_replays=0, ammo_spend=0, caught_cat=''):
         self.level = level
         self.coins = coins
         self.skin = skin
+        self.skins_have = skins_have
         self.kills = kills
         self.restarts = restarts
         self.game_replays = game_replays
@@ -18,6 +19,7 @@ class User:
         data['level'] = self.level
         data['coins'] = self.coins
         data['skin'] = self.skin
+        data['skins_have'] = self.skins_have
         data['kills'] = self.kills
         data['restarts'] = self.restarts
         data['game_replays'] = self.game_replays
