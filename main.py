@@ -31,6 +31,8 @@ hero = None
 cat = None
 luke = None
 lamp = False
+restarts = 0
+cat_number = None
 congratulations = False
 
 
@@ -285,7 +287,7 @@ class Hero(pygame.sprite.Sprite):
                                              (self.rect.y + self.image.get_size()[1] // 2)))
 
     def update(self, cube, cube_2, sprites, enemy_sprites, cat, luke):
-        global user
+        global user, cat_number
         # logic of moving and collision with different sprites
         if not self.home:
             self.move_gun()
@@ -336,7 +338,8 @@ class Hero(pygame.sprite.Sprite):
         if not self.home:
             if pygame.sprite.collide_mask(self, cat):
                 if not self.catch_cat:
-                    user.caught_cat += cat.number
+                    cat_number = cat.number
+                    # user.caught_cat += cat.number
                 cat.kill()
                 self.catch_cat = True
                 self.frames = DICT_IMAGES[f'hero_frames_{user.skin}_bag']
@@ -954,7 +957,7 @@ def print_info(home):
 
 # one of the main functions. level function
 def main_action():
-    global congratulations
+    global congratulations, restarts, cat_number
     running = True
 
     init_frames(levels[user.level - 1])
@@ -972,6 +975,9 @@ def main_action():
     hero.home = False
     if user.level == 1:
         user.caught_cat = ''
+
+    kills = 0
+    ammo_spend = 0
     while running:
         SCREEN.fill(pygame.Color('black'))
         for event in pygame.event.get():
@@ -996,6 +1002,7 @@ def main_action():
                             continue
                         hero.gun.ammo_now -= 1
                         user.ammo_spend += 1
+                        ammo_spend += 1
                         # added a shot to list
                         firesList.append(
                             [
@@ -1028,6 +1035,15 @@ def main_action():
         keys = pygame.key.get_pressed()
         if keys[pygame.K_RETURN]:
             if hero.catch_cat and hero.on_the_luke:
+                # add coins to user
+                coins = user.level * 2 + 24
+                coins += kills
+                if restarts == 0:
+                    coins += 10
+                elif 1 <= restarts <= 2:
+                    coins += 4
+                user.coins += coins
+                # new level logic
                 user.new_level()
                 if user.level == 4:
                     user.level = 1
@@ -1104,6 +1120,7 @@ def main_action():
                         person.frames = DICT_IMAGES['death_frames']
                         person.cur_frame = 0
                         user.kills += 1
+                        kills += 1
                 firesList.remove(elem)
             elif pygame.sprite.spritecollideany(sprite, horizontal_borders) or pygame.sprite.spritecollideany(sprite,
                                                                                                               vertical_borders):
@@ -1123,13 +1140,15 @@ def main_action():
         CLOCK.tick(FPS)
         pygame.display.flip()
     if win:
-        return game_over_win(True)
+        user.caught_cat += cat_number
+        return game_over_win(True, coins)
     user.restarts += 1
+    restarts += 1
     return game_over_win()
 
 
 # window which shows when you lose or win
-def game_over_win(value=False):
+def game_over_win(value=False, coins=0):
     stopped = True
     button_lose = Button(100, 50, active_color=(255, 255, 255), inactive_color=(180, 76, 67))
     button_win = Button(100, 50, active_color=(255, 255, 255), inactive_color=(76, 187, 23))
@@ -1148,8 +1167,9 @@ def game_over_win(value=False):
             button_lose.draw(x=WIDTH // 2 - 50, y=HEIGHT // 2 + 75, message='МЕНЮ', action=show_menu, dl_x=15, dl_y=15)
         elif value is True:
             print_text("YOU WIN.", (124, 252, 0), 75, x=0, y=30, center=True)
-            print_text("PRESS ENTER TO CONTINUE", (189, 218, 87), 50, x=0, y=-30, center=True)
-            button_win.draw(x=WIDTH // 2 - 50, y=HEIGHT // 2 + 75, message='МЕНЮ', action=show_menu, dl_x=15, dl_y=15)
+            print_text(f"YOU ERNED {coins} COINS", 'gold', 50, x=0, y=-20, center=True)
+            print_text("PRESS ENTER TO CONTINUE", (189, 218, 87), 45, x=0, y=-60, center=True)
+            button_win.draw(x=WIDTH // 2 - 50, y=HEIGHT // 2 + 75, message='МЕНЮ', action=show_menu, dl_x=15, dl_y=20)
 
         pygame.display.flip()
         CLOCK.tick(FPS)
@@ -1165,9 +1185,6 @@ def congratulations_window():
                 terminate()
             if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
                 paused = False
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_a] or keys[pygame.K_d] or keys[pygame.K_w] or keys[pygame.K_s]:
-            paused = False
 
         pygame.draw.rect(SCREEN, (21, 23, 25), (WIDTH // 2 - 300, HEIGHT // 2 - 80, 600, 230))
         print_text("YOU PASSED THE GAME.", (124, 252, 0), 60, x=0, y=30, center=True)
@@ -1248,31 +1265,31 @@ def shop_menu():
         print_text('price: 0', color=(255, 255, 255), font=30, x=150, y=130)
         buy_default.draw(x=250, y=120, message='BUY' if 'default' not in user.skins_have else 'USE',
                          font_size=24, action=buy_skin if 'default' not in user.skins_have else use_skin,
-                         skin='default', buy=True if 'default' not in user.skins_have else False)
+                         skin='default', price=0, buy=True if 'default' not in user.skins_have else False)
 
         SCREEN.blit(DICT_IMAGES['hero_frames_colorit'][0], (100, 100 + dl_y))
         print_text("colorit", color=(255, 255, 255), font=20, x=100, y=168 + dl_y)
         print_text(text='used' if user.skin == 'colorit' else '', color='green', font=20, x=275, y=160 + dl_y)
-        print_text('price: 5', color=(255, 255, 255), font=30, x=150, y=130 + dl_y)
+        print_text('price: 75', color=(255, 255, 255), font=30, x=150, y=130 + dl_y)
         buy_default.draw(x=250, y=120 + dl_y, message='BUY' if 'colorit' not in user.skins_have else 'USE',
                          font_size=24, action=buy_skin if 'colorit' not in user.skins_have else use_skin,
-                         skin='colorit', price=5, buy=True if 'colorit' not in user.skins_have else False)
+                         skin='colorit', price=75, buy=True if 'colorit' not in user.skins_have else False)
 
         SCREEN.blit(DICT_IMAGES['hero_frames_radiation'][0], (100, 100 + dl_y * 2))
         print_text("radiation", color=(255, 255, 255), font=20, x=98, y=168 + dl_y * 2)
         print_text(text='used' if user.skin == 'radiation' else '', color='green', font=20, x=275, y=160 + dl_y * 2)
-        print_text('price: 10', color=(255, 255, 255), font=30, x=150, y=130 + dl_y * 2)
+        print_text('price: 100', color=(255, 255, 255), font=30, x=150, y=130 + dl_y * 2)
         buy_default.draw(x=250, y=120 + dl_y * 2, message='BUY' if 'radiation' not in user.skins_have else 'USE',
                          font_size=24, action=buy_skin if 'radiation' not in user.skins_have else use_skin,
-                         skin='radiation', price=10, buy=True if 'radiation' not in user.skins_have else False)
+                         skin='radiation', price=100, buy=True if 'radiation' not in user.skins_have else False)
 
         SCREEN.blit(DICT_IMAGES['hero_frames_extra_pink'][0], (100, 100 + dl_y * 3))
         print_text("extra pink", color=(255, 255, 255), font=20, x=95, y=168 + dl_y * 3)
         print_text(text='used' if user.skin == 'extra_pink' else '', color='green', font=20, x=275, y=160 + dl_y * 3)
-        print_text('price: 7', color=(255, 255, 255), font=30, x=150, y=130 + dl_y * 3)
+        print_text('price: 50', color=(255, 255, 255), font=30, x=150, y=130 + dl_y * 3)
         buy_default.draw(x=250, y=120 + dl_y * 3, message='BUY' if 'extra_pink' not in user.skins_have else 'USE',
                          font_size=24, action=buy_skin if 'extra_pink' not in user.skins_have else use_skin,
-                         skin='extra_pink', price=7, buy=True if 'extra_pink' not in user.skins_have else False)
+                         skin='extra_pink', price=50, buy=True if 'extra_pink' not in user.skins_have else False)
         # weapon
         print_text('WEAPON', color=(255, 255, 255), font=50, x=700, y=50)
         SCREEN.blit(DICT_IMAGES['ak47'], (650, 120))
@@ -1290,10 +1307,10 @@ def shop_menu():
         print_text(f"power: {dict_weapon['m4a1'].power}", color=(255, 255, 255), font=20, x=710, y=160 + dl_y)
         print_text(f"ammo: {dict_weapon['m4a1'].ammo}", color=(255, 255, 255), font=20, x=780, y=160 + dl_y)
         print_text(text='used' if user.gun == 'm4a1' else '', color='green', font=20, x=865, y=160 + dl_y)
-        print_text('price: 50', color=(255, 255, 255), font=30, x=735, y=130 + dl_y)
+        print_text('price: 140', color=(255, 255, 255), font=30, x=735, y=130 + dl_y)
         buy_default.draw(x=840, y=120 + dl_y, message='BUY' if 'm4a1' not in user.gun_have else 'USE',
                          font_size=24, action=buy_gun if 'm4a1' not in user.gun_have else use_gun,
-                         gun='m4a1', price=50, buy=True if 'm4a1' not in user.gun_have else False)
+                         gun='m4a1', price=140, buy=True if 'm4a1' not in user.gun_have else False)
 
         print_text('PRESS ENTER TO EXIT', color=(255, 255, 255), font=20, x=WIDTH // 2 - 78, y=HEIGHT - 40)
         CLOCK.tick(FPS)
