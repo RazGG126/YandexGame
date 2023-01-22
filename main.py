@@ -68,6 +68,8 @@ DICT_IMAGES = {
     'ak47': load_image(r'weapon\ak47.png'),
     'm4a1': load_image(r'weapon\m4a1.png'),
     'menu_bg': load_image(r'textures\bg-menu.png'),
+    'keys_wasd': load_image(r'textures\keys_wasd.png'),
+    'keys_arrows': load_image(r'textures\keys_arrows.png'),
     'ground_ender': load_image(r'ground\ender_block.png'),
     'stone_block': load_image(r'textures\stone_block.png'),
     'cat1': [load_image(r'sprites\cats\murzik\cat.png'), load_image(r'sprites\cats\murzik\cat_2.png'),
@@ -91,7 +93,8 @@ def load_json():
     user = User(level=data['level'], coins=data['coins'],
                 skin=data['skin'], skins_have=data['skins_have'], gun=data['gun'], gun_have=data['gun_have'],
                 kills=data['kills'], restarts=data['restarts'], game_replays=data['game_replays'],
-                ammo_spend=data['ammo_spend'], caught_cat=data['caught_cat'])
+                ammo_spend=data['ammo_spend'], caught_cat=data['caught_cat'],
+                menu_music_volume=data['menu_music_volume'], control=data['control'])
 
 
 load_json()
@@ -978,6 +981,8 @@ def main_action():
 
     kills = 0
     ammo_spend = 0
+    # control using wasd TRUE|FALSE
+    control_wasd = user.control
     while running:
         SCREEN.fill(pygame.Color('black'))
         for event in pygame.event.get():
@@ -1054,20 +1059,30 @@ def main_action():
         if keys[pygame.K_r]:
             if hero.gun.wait == 0:
                 hero.gun.ammo_now = 0
-        if keys[pygame.K_a]:
+        if control_wasd:
+            up = pygame.K_w
+            down = pygame.K_s
+            left = pygame.K_a
+            right = pygame.K_d
+        else:
+            up = pygame.K_UP
+            down = pygame.K_DOWN
+            left = pygame.K_LEFT
+            right = pygame.K_RIGHT
+        if keys[left]:
             hero.moving = True
             hero.moving_left = True
             hero.moving_right = False
             hero.move_x -= hero.speed_x
-        if keys[pygame.K_d]:
+        if keys[right]:
             hero.moving = True
             hero.moving_left = False
             hero.moving_right = True
             hero.move_x += hero.speed_x
-        if keys[pygame.K_w]:
+        if keys[up]:
             hero.moving = True
             hero.move_y -= hero.speed_y
-        if keys[pygame.K_s]:
+        if keys[down]:
             hero.moving = True
             hero.move_y += hero.speed_y
 
@@ -1175,6 +1190,50 @@ def game_over_win(value=False, coins=0):
         CLOCK.tick(FPS)
 
 
+def show_setting_menu():
+    paused = True
+    btn = Button(150, 50, active_color=(255, 255, 255), inactive_color=(255, 202, 134))
+    while paused:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+                paused = False
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                x, y = pygame.mouse.get_pos()
+                if (WIDTH // 2 + 49 <= x <= WIDTH // 2 + 221) and (HEIGHT // 2 - 1 <= y <= HEIGHT // 2 + 113):
+                    user.control = True
+                elif (WIDTH // 2 - 225 <= x <= WIDTH // 2 - 53) and (HEIGHT // 2 - 1 <= y <= HEIGHT // 2 + 113):
+                    user.control = False
+        # 27, 17, 22
+
+        key_pressed = pygame.key.get_pressed()
+        if key_pressed[pygame.K_UP]:
+            pygame.mixer.music.set_volume(pygame.mixer.music.get_volume() + 0.01)
+        elif key_pressed[pygame.K_DOWN]:
+            pygame.mixer.music.set_volume(pygame.mixer.music.get_volume() - 0.01)
+        # 21,23,25
+        pygame.draw.rect(SCREEN, (0, 0, 0), (0, 0, WIDTH, HEIGHT))
+        print_text("SETTINGS.", (255, 255, 255), 75, x=0, y=180, center=True)
+        print_text(f"THE VOLUME OF MUSIC: {round(pygame.mixer.music.get_volume() * 100)}",
+                   color=(255, 202, 134), font=40, x=0, y=120, center=True)
+        print_text("KEY UP + | KEY DOWN -", (255, 255, 255), 20, x=0, y=90, center=True)
+        user.menu_music_volume = pygame.mixer.music.get_volume()
+
+        # left side
+        print_text(f"CONTROL", color=(255, 202, 134), font=40, x=0, y=30, center=True)
+        SCREEN.blit(DICT_IMAGES['keys_wasd'], (WIDTH // 2 + 50, HEIGHT // 2))
+        # right sided
+        SCREEN.blit(DICT_IMAGES['keys_arrows'], (WIDTH // 2 - 224, HEIGHT // 2))
+
+        if user.control:
+            pygame.draw.rect(SCREEN, (255, 255, 255), (WIDTH // 2 + 49, HEIGHT // 2 - 1, 172, 114), width=2)
+        else:
+            pygame.draw.rect(SCREEN, (255, 255, 255), (WIDTH // 2 - 225, HEIGHT // 2 - 1, 172, 114), width=2)
+        btn.draw(WIDTH // 2 - 75, HEIGHT // 2 + 150, dl_x=45, dl_y=18, message='BACK', action=show_menu, font_size=30)
+        pygame.display.flip()
+        CLOCK.tick(FPS)
+
 # window which shows when you passed the game
 def congratulations_window():
     paused = True
@@ -1214,7 +1273,7 @@ def show_menu():
 
         SCREEN.blit(menu_background, (0, 0))
         btn.draw(150 + dl_x, 80, dl_x=35, dl_y=25, message='PLAY.', action=start_game, font_size=70)
-        settings_btn.draw(175 + dl_x, 205, dl_x=25, dl_y=18, message='SETTINGS.', font_size=30)
+        settings_btn.draw(175 + dl_x, 205, dl_x=25, dl_y=18, message='SETTINGS.', action=show_setting_menu, font_size=30)
         settings_btn.draw(175 + dl_x, 280, dl_x=40, dl_y=18, message='STATА.', action=show_stat, font_size=30)
         settings_btn.draw(175 + dl_x, 355, dl_x=50, dl_y=18, message='EXIT.', action=terminate, font_size=30)
         pygame.display.update()
@@ -1352,6 +1411,8 @@ def home_action():
     camera = Camera()
 
     hero.home = True
+    #control using wasd TRUE|FALSE
+    control_wasd = user.control
     while running:
         SCREEN.fill(pygame.Color('black'))
         for event in pygame.event.get():
@@ -1366,20 +1427,30 @@ def home_action():
         if keys[pygame.K_e]:
             if pygame.sprite.collide_rect(hero, lamp):
                 shop_menu()
-        if keys[pygame.K_a]:
+        if control_wasd:
+            up = pygame.K_w
+            down = pygame.K_s
+            left = pygame.K_a
+            right = pygame.K_d
+        else:
+            up = pygame.K_UP
+            down = pygame.K_DOWN
+            left = pygame.K_LEFT
+            right = pygame.K_RIGHT
+        if keys[left]:
             hero.moving = True
             hero.moving_left = True
             hero.moving_right = False
             hero.move_x -= hero.speed_x
-        if keys[pygame.K_d]:
+        if keys[right]:
             hero.moving = True
             hero.moving_left = False
             hero.moving_right = True
             hero.move_x += hero.speed_x
-        if keys[pygame.K_w]:
+        if keys[up]:
             hero.moving = True
             hero.move_y -= hero.speed_y
-        if keys[pygame.K_s]:
+        if keys[down]:
             hero.moving = True
             hero.move_y += hero.speed_y
 
@@ -1424,6 +1495,7 @@ from_game = False
 
 pygame.mixer.music.load('data/sounds/bg-tack.ogg')
 pygame.mixer.music.play(-1)
+pygame.mixer.music.set_volume(user.menu_music_volume)
 
 shoot = pygame.mixer.Sound('data/sounds/shoot.ogg')
 shoot.set_volume(0.5)

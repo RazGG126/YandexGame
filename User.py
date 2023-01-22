@@ -2,8 +2,8 @@ levels = ['game_map.txt', 'game_map_2.txt', 'game_map_3.txt']
 
 
 class User:
-    def __init__(self,level, coins, skin='default', skins_have=['default'], gun='ak47', kills=0, gun_have=['ak47'],
-                 restarts=0, game_replays=0, ammo_spend=0, caught_cat=''):
+    def __init__(self,level, coins, skin='default', skins_have=['default'], gun='ak47', kills=0, gun_have=['ak47']
+                 , restarts=0, game_replays=0, ammo_spend=0, caught_cat='', menu_music_volume=0, control=True):
         self.level = level
         self.coins = coins
         self.skin = skin
@@ -15,6 +15,8 @@ class User:
         self.game_replays = game_replays
         self.ammo_spend = ammo_spend
         self.caught_cat = caught_cat
+        self.menu_music_volume = menu_music_volume
+        self.control = control
 
     def create_dict(self):
         data = dict()
@@ -30,6 +32,8 @@ class User:
         data['game_replays'] = self.game_replays
         data['ammo_spend'] = self.ammo_spend
         data['caught_cat'] = self.caught_cat
+        data['menu_music_volume'] = self.menu_music_volume
+        data['control'] = self.control
 
         return data
 
