@@ -885,8 +885,6 @@ def show_stat():
                 terminate()
             if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
                 paused = False
-        # 21,23,25
-        # 27, 17, 22
         pygame.draw.rect(SCREEN, (0, 0, 0), (0, 0, WIDTH, HEIGHT))
         print_text("STATA.", (255, 255, 255), 75, x=0, y=90, center=True)
         print_text(f"level: {user.level}    coins: {user.coins}", (255, 202, 134), 50, x=0, y=40, center=True)
@@ -1210,14 +1208,13 @@ def show_setting_menu():
                     user.control = True
                 elif (WIDTH // 2 - 225 <= x <= WIDTH // 2 - 53) and (HEIGHT // 2 - 1 <= y <= HEIGHT // 2 + 113):
                     user.control = False
-        # 27, 17, 22
 
         key_pressed = pygame.key.get_pressed()
         if key_pressed[pygame.K_UP]:
             pygame.mixer.music.set_volume(pygame.mixer.music.get_volume() + 0.01)
         elif key_pressed[pygame.K_DOWN]:
             pygame.mixer.music.set_volume(pygame.mixer.music.get_volume() - 0.01)
-        # 21,23,25
+
         pygame.draw.rect(SCREEN, (0, 0, 0), (0, 0, WIDTH, HEIGHT))
         print_text("SETTINGS.", (255, 255, 255), 75, x=0, y=180, center=True)
         print_text(f"THE VOLUME OF MUSIC: {round(pygame.mixer.music.get_volume() * 100)}",
@@ -1510,6 +1507,5 @@ meow = pygame.mixer.Sound('data/sounds/meow.ogg')
 reloading = pygame.mixer.Sound('data/sounds/reloading.ogg')
 reloading.set_volume(0.3)
 
-# shop_menu()
 show_menu()
 terminate()
