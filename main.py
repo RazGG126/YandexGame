@@ -53,41 +53,43 @@ def load_image(name, colorkey=None):
 
 # dictionary with frames
 DICT_IMAGES = {
-    'hero_frames_default': [load_image(rf'walk\default\{i}.png') for i in range(1, 7)],
-    'hero_frames_colorit': [load_image(rf'walk\colorit\{i}.png') for i in range(1, 7)],
-    'hero_frames_extra_pink': [load_image(rf'walk\extra_pink\{i}.png') for i in range(1, 7)],
-    'hero_frames_radiation': [load_image(rf'walk\radiation\{i}.png') for i in range(1, 7)],
-    'enemy_frames': [load_image(rf'walk\enemy_skin\enemy.{i}.png') for i in range(1, 7)],
-    'hero_frames_default_bag': [load_image(rf'walk\default\{i}.{i}.png') for i in range(1, 7)],
-    'hero_frames_colorit_bag': [load_image(rf'walk\colorit\{i}.{i}.png') for i in range(1, 7)],
-    'hero_frames_extra_pink_bag': [load_image(rf'walk\extra_pink\{i}.{i}.png') for i in range(1, 7)],
-    'hero_frames_radiation_bag': [load_image(rf'walk\radiation\{i}.{i}.png') for i in range(1, 7)],
+    'hero_frames_default': [load_image(rf'sprites\default\{i}.png') for i in range(1, 7)],
+    'hero_frames_colorit': [load_image(rf'sprites\colorit\{i}.png') for i in range(1, 7)],
+    'hero_frames_extra_pink': [load_image(rf'sprites\extra_pink\{i}.png') for i in range(1, 7)],
+    'hero_frames_radiation': [load_image(rf'sprites\radiation\{i}.png') for i in range(1, 7)],
+    'enemy_frames': [load_image(rf'sprites\enemy_skin\enemy.{i}.png') for i in range(1, 7)],
+    'hero_frames_default_bag': [load_image(rf'sprites\default\{i}.{i}.png') for i in range(1, 7)],
+    'hero_frames_colorit_bag': [load_image(rf'sprites\colorit\{i}.{i}.png') for i in range(1, 7)],
+    'hero_frames_extra_pink_bag': [load_image(rf'sprites\extra_pink\{i}.{i}.png') for i in range(1, 7)],
+    'hero_frames_radiation_bag': [load_image(rf'sprites\radiation\{i}.{i}.png') for i in range(1, 7)],
     'death_frames': [load_image(rf'death\{i}.png') for i in range(1, 8)],
-    'menu_bg': load_image('menu_bg.jpg'),
+    'ak47': load_image(r'weapon\ak47.png'),
+    'm4a1': load_image(r'weapon\m4a1.png'),
+    'menu_bg': load_image(r'textures\menu_bg.jpg'),
     'ground_ender': load_image(r'ground\ender_block.png'),
-    'enemy_red': load_image(r'enemy_red.png'),
-    'stone_block': load_image(r'stone_block.png'),
-    'cat1': [load_image('cat.png'), load_image('cat_2.png'), load_image('cat.png'), load_image('cat_3.png')],
-    'cat2': [load_image('cat_treha.png'), load_image('cat_treha_2.png'),
-             load_image('cat_treha_4.png'), load_image('cat_treha_3.png')],
-    'box': load_image('box.jpg'),
-    'ground_sand': load_image('ground_sand.png'),
-    'ground_stone': load_image('ground_stone.jpg'),
-    'bush': load_image('bush_mine.png'),
-    'branch': load_image('branch.png'),
-    'luke': load_image('luke.png'),
-    'lamp': load_image('glowstone.png'),
+    'stone_block': load_image(r'textures\stone_block.png'),
+    'cat1': [load_image(r'sprites\cats\murzik\cat.png'), load_image(r'sprites\cats\murzik\cat_2.png'),
+             load_image(r'sprites\cats\murzik\cat.png'), load_image(r'sprites\cats\murzik\cat_3.png')],
+    'cat2': [load_image(r'sprites\cats\treha\cat_treha.png'), load_image(r'sprites\cats\treha\cat_treha_2.png'),
+             load_image(r'sprites\cats\treha\cat_treha_4.png'), load_image(r'sprites\cats\treha\cat_treha_3.png')],
+    'box': load_image(r'textures\box.jpg'),
+    'ground_sand': load_image(r'textures\ground_sand.png'),
+    'ground_stone': load_image(r'textures\ground_stone.jpg'),
+    'bush': load_image(r'textures\bush_mine.png'),
+    'branch': load_image(r'textures\branch.png'),
+    'luke': load_image(r'textures\luke.png'),
+    'lamp': load_image(r'textures\glowstone.png'),
 }
 
 
 # function of loading <<user>> statistics
 def load_json():
     global user
-    data = json.load(open('user.json', 'r', encoding='utf-8'))
+    data = json.load(open(r'data\User\user.json', 'r', encoding='utf-8'))
     user = User(level=data['level'], coins=data['coins'],
-                skin=data['skin'], skins_have=data['skins_have'], kills=data['kills'],
-                restarts=data['restarts'], game_replays=data['game_replays'], ammo_spend=data['ammo_spend'],
-                caught_cat=data['caught_cat'])
+                skin=data['skin'], skins_have=data['skins_have'], gun=data['gun'], gun_have=data['gun_have'],
+                kills=data['kills'], restarts=data['restarts'], game_replays=data['game_replays'],
+                ammo_spend=data['ammo_spend'], caught_cat=data['caught_cat'])
 
 
 load_json()
@@ -98,15 +100,14 @@ def dump_json():
     global user
     data = user.create_dict()
 
-    json.dump(data, open('user.json', 'w', encoding='utf-8'))
+    json.dump(data, open(r'data\User\user.json', 'w', encoding='utf-8'))
 
 
 # <<gun>> class
 class Gun(pygame.sprite.Sprite):
     def __init__(self, power, ammo, gun_image, *groups: AbstractGroup):
         super().__init__(*groups)
-        self.gun_image = gun_image
-        self.image = load_image(gun_image)
+        self.image = gun_image
         self.rect = self.image.get_rect()
         self.power = power
         self.ammo = ammo
@@ -206,6 +207,10 @@ class Hero(pygame.sprite.Sprite):
         self.count_reloading = 0
 
         self.home = False
+
+    def change_gun(self, gun):
+        self.gun = gun
+        self.gun_image = gun.image
 
     def sound_walk(self):
         # logic of sound <<walk>>
@@ -676,7 +681,10 @@ class Border(pygame.sprite.Sprite):
 
 
 # initialization of weapon
-ak47 = Gun(power=15, ammo=30, gun_image='gun.png')
+dict_weapon = {
+    'ak47': Gun(power=15, ammo=25, gun_image=DICT_IMAGES['ak47']),
+    'm4a1': Gun(power=30, ammo=20, gun_image=DICT_IMAGES['m4a1'])
+}
 
 
 # <<button>> class
@@ -687,7 +695,7 @@ class Button:
         self.inactive_color = inactive_color
         self.active_color = active_color
 
-    def draw(self, x, y, message, dl_x=10, dl_y=10, action=None, font_size=30, skin=None, price=None, buy=None):
+    def draw(self, x, y, message, dl_x=10, dl_y=10, action=None, font_size=30, gun=None, skin=None, price=None, buy=None):
         mouse = pygame.mouse.get_pos()
         click = pygame.mouse.get_pressed()
 
@@ -697,9 +705,15 @@ class Button:
             if click[0] == 1 and action is not None:
                 if buy is not None:
                     if buy:
-                        action(skin, price)
+                        if skin is not None:
+                            action(skin, price)
+                        else:
+                            action(gun, price)
                     else:
-                        action(skin)
+                        if skin is not None:
+                            action(skin)
+                        else:
+                            action(gun)
                 else:
                     action()
 
@@ -738,7 +752,7 @@ def init_frames(map):
             GroundTexture('ground_ender', x, y)
 
     world = []
-    file = open(map, 'r')
+    file = open(fr'data\levels\{map}', 'r')
     for line in file:
         line = line.strip()
         arr = []
@@ -810,11 +824,12 @@ def init_frames(map):
             sprites.add(cat)
 
     for elem in hero_l:
-        hero = Hero(elem[0], elem[1], gun=ak47, frames=DICT_IMAGES['hero_frames_' + user.skin])
+        gun = None
+        hero = Hero(elem[0], elem[1], gun=dict_weapon[user.gun], frames=DICT_IMAGES['hero_frames_' + user.skin])
         sprites.add(hero)
 
     for elem in enemies:
-        enemy = Enemy(elem[0], elem[1], gun=ak47,
+        enemy = Enemy(elem[0], elem[1], gun=dict_weapon['ak47'],
                       frames=DICT_IMAGES['enemy_frames'], hero=hero)
         enemy_sprites.add(enemy)
 
@@ -1199,9 +1214,20 @@ def buy_skin(skin, price):
         user.skins_have.append(skin)
 
 
+def use_gun(gun):
+    user.gun = gun
+    hero.change_gun(dict_weapon[user.gun])
+
+
+def buy_gun(gun, price):
+    if user.coins >= price:
+        user.coins -= price
+        user.gun_have.append(gun)
+
+
 def shop_menu():
     show = True
-    #for skins
+    # for skins
     buy_default = Button(80, 35, active_color=(255, 255, 255), inactive_color='green')
     dl_x = 20
     dl_y = 100
@@ -1212,11 +1238,12 @@ def shop_menu():
             if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
                 show = False
         SCREEN.fill((0, 0, 0))
-        print_text(f'COINS: {user.coins}', color='gold', font=35, x=425, y=58)
-        #skins
+        print_text(f'COINS: {user.coins}', color='gold', font=35, x=437, y=58)
+        # skins
         print_text('SKINS', color=(255, 255, 255), font=50, x=150, y=50)
         SCREEN.blit(DICT_IMAGES['hero_frames_default'][0], (100, 100))
         print_text("default", color=(255, 255, 255), font=20, x=100, y=168)
+        print_text(text='used' if user.skin == 'default' else '', color='green', font=20, x=275, y=160)
         print_text('price: 0', color=(255, 255, 255), font=30, x=150, y=130)
         buy_default.draw(x=250, y=120, message='BUY' if 'default' not in user.skins_have else 'USE',
                          font_size=24, action=buy_skin if 'default' not in user.skins_have else use_skin,
@@ -1224,6 +1251,7 @@ def shop_menu():
 
         SCREEN.blit(DICT_IMAGES['hero_frames_colorit'][0], (100, 100 + dl_y))
         print_text("colorit", color=(255, 255, 255), font=20, x=100, y=168 + dl_y)
+        print_text(text='used' if user.skin == 'colorit' else '', color='green', font=20, x=275, y=160 + dl_y)
         print_text('price: 5', color=(255, 255, 255), font=30, x=150, y=130 + dl_y)
         buy_default.draw(x=250, y=120 + dl_y, message='BUY' if 'colorit' not in user.skins_have else 'USE',
                          font_size=24, action=buy_skin if 'colorit' not in user.skins_have else use_skin,
@@ -1231,6 +1259,7 @@ def shop_menu():
 
         SCREEN.blit(DICT_IMAGES['hero_frames_radiation'][0], (100, 100 + dl_y * 2))
         print_text("radiation", color=(255, 255, 255), font=20, x=98, y=168 + dl_y * 2)
+        print_text(text='used' if user.skin == 'radiation' else '', color='green', font=20, x=275, y=160 + dl_y * 2)
         print_text('price: 10', color=(255, 255, 255), font=30, x=150, y=130 + dl_y * 2)
         buy_default.draw(x=250, y=120 + dl_y * 2, message='BUY' if 'radiation' not in user.skins_have else 'USE',
                          font_size=24, action=buy_skin if 'radiation' not in user.skins_have else use_skin,
@@ -1238,21 +1267,43 @@ def shop_menu():
 
         SCREEN.blit(DICT_IMAGES['hero_frames_extra_pink'][0], (100, 100 + dl_y * 3))
         print_text("extra pink", color=(255, 255, 255), font=20, x=95, y=168 + dl_y * 3)
+        print_text(text='used' if user.skin == 'extra_pink' else '', color='green', font=20, x=275, y=160 + dl_y * 3)
         print_text('price: 7', color=(255, 255, 255), font=30, x=150, y=130 + dl_y * 3)
         buy_default.draw(x=250, y=120 + dl_y * 3, message='BUY' if 'extra_pink' not in user.skins_have else 'USE',
                          font_size=24, action=buy_skin if 'extra_pink' not in user.skins_have else use_skin,
                          skin='extra_pink', price=7, buy=True if 'extra_pink' not in user.skins_have else False)
-        #weapon
+        # weapon
         print_text('WEAPON', color=(255, 255, 255), font=50, x=700, y=50)
+        SCREEN.blit(DICT_IMAGES['ak47'], (650, 120))
+        print_text('ak47', color=(255, 255, 255), font=20, x=670, y=160)
+        print_text(f"power: {dict_weapon['ak47'].power}", color=(255, 255, 255), font=20, x=710, y=160)
+        print_text(f"ammo: {dict_weapon['ak47'].ammo}", color=(255, 255, 255), font=20, x=780, y=160)
+        print_text(text='used' if user.gun == 'ak47' else '', color='green', font=20, x=865, y=160)
+        print_text('price: 0', color=(255, 255, 255), font=30, x=735, y=130)
+        buy_default.draw(x=840, y=120, message='BUY' if 'ak47' not in user.gun_have else 'USE',
+                         font_size=24, action=buy_gun if 'ak47' not in user.gun_have else use_gun,
+                         gun='ak47', price=0, buy=True if 'ak47' not in user.gun_have else False)
+
+        SCREEN.blit(DICT_IMAGES['m4a1'], (650, 120 + dl_y))
+        print_text('m4a1', color=(255, 255, 255), font=20, x=670, y=160 + dl_y)
+        print_text(f"power: {dict_weapon['m4a1'].power}", color=(255, 255, 255), font=20, x=710, y=160 + dl_y)
+        print_text(f"ammo: {dict_weapon['m4a1'].ammo}", color=(255, 255, 255), font=20, x=780, y=160 + dl_y)
+        print_text(text='used' if user.gun == 'm4a1' else '', color='green', font=20, x=865, y=160 + dl_y)
+        print_text('price: 50', color=(255, 255, 255), font=30, x=735, y=130 + dl_y)
+        buy_default.draw(x=840, y=120 + dl_y, message='BUY' if 'm4a1' not in user.gun_have else 'USE',
+                         font_size=24, action=buy_gun if 'm4a1' not in user.gun_have else use_gun,
+                         gun='m4a1', price=50, buy=True if 'm4a1' not in user.gun_have else False)
+
         print_text('PRESS ENTER TO EXIT', color=(255, 255, 255), font=20, x=WIDTH // 2 - 78, y=HEIGHT - 40)
         CLOCK.tick(FPS)
         pygame.display.flip()
+
 
 # function of resetting values the variables
 def reset():
     global ground_sprites, \
         enemy_sprites, all_sprites, vertical_borders, \
-        horizontal_borders, sprites, sprites_, unmoving_sprites, mousePos, ak47
+        horizontal_borders, sprites, sprites_, unmoving_sprites, mousePos, dict_weapon
     ground_sprites = pygame.sprite.Group()
     enemy_sprites = pygame.sprite.Group()
     all_sprites = pygame.sprite.Group()
@@ -1262,7 +1313,10 @@ def reset():
     sprites_ = pygame.sprite.Group()
     unmoving_sprites = pygame.sprite.Group()
     mousePos = {'x': 0, 'y': 0}
-    ak47 = Gun(power=15, ammo=30, gun_image='gun.png')
+    dict_weapon = {
+        'ak47': Gun(power=15, ammo=30, gun_image=DICT_IMAGES['ak47']),
+        'm4a1': Gun(power=30, ammo=20, gun_image=DICT_IMAGES['m4a1'])
+    }
 
 
 # one of the main functions. home level function
@@ -1360,5 +1414,6 @@ meow = pygame.mixer.Sound('data/sounds/meow.ogg')
 reloading = pygame.mixer.Sound('data/sounds/reloading.ogg')
 reloading.set_volume(0.3)
 
+# shop_menu()
 show_menu()
 terminate()

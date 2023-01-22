@@ -38,7 +38,7 @@ while running:
             file_n = input('Название файла: ')
             while file_name is None and len(file_n) == 0:
                 file_n = input('Название файла: ')
-            file = open(file_name if len(file_n) == 0 else file_n, 'w')
+            file = open(fr'data\levels\{file_name}' if len(file_n) == 0 else fr'data\levels\{file_n}', 'w')
             for row in range(world_height):
                 for col in range(world_width):
                     file.write(str(world[row][col]))
@@ -48,7 +48,7 @@ while running:
         if event.type == pygame.KEYDOWN and event.key == pygame.K_o:
             try:
                 file_name = input('Название файла: ')
-                file = open(file_name, 'r')
+                file = open(fr'data\levels\{file_name}', 'r')
 
                 row, col = 0, 0
                 for line in file:
