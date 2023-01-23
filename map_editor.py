@@ -128,7 +128,7 @@ while running:
             elif world[row][col] == 9:
                 pygame.draw.rect(screen, pygame.Color('white'), (x, y, cell_size * 7, cell_size * 6))
             elif world[row][col] == 'l':
-                pygame.draw.rect(screen, pygame.Color('purple'), (x, y, cell_size * 7, cell_size * 7))
+                pygame.draw.rect(screen, pygame.Color('purple'), (x, y, cell_size * 5, cell_size * 5))
             elif world[row][col] == 'w':
                 pygame.draw.rect(screen, pygame.Color(255, 250, 205), (x, y, cell_size * 5, cell_size * 5))
             elif world[row][col] == 'd':

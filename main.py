@@ -84,7 +84,8 @@ DICT_IMAGES = {
     'ground_stone': load_image(r'textures\ground_stone.jpg'),
     'bush': load_image(r'textures\bush_mine.png'),
     'branch': load_image(r'textures\branch.png'),
-    'luke': load_image(r'textures\luke.png'),
+    'luke_h': load_image(r'textures\trapdoor_h.png'),
+    'luke': load_image(r'textures\trapdoor.png'),
     'lamp': load_image(r'textures\glowstone.png'),
 }
 
