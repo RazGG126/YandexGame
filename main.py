@@ -72,6 +72,9 @@ DICT_IMAGES = {
     'keys_arrows': load_image(r'textures\keys_arrows.png'),
     'ground_ender': load_image(r'ground\ender_block.png'),
     'stone_block': load_image(r'textures\stone_block.png'),
+    'tree_block': load_image(r'textures\tree-block.png'),
+    'red_block': load_image(r'textures\red-block.png'),
+    'white_block': load_image(r'textures\white-block.png'),
     'cat1': [load_image(r'sprites\cats\murzik\cat.png'), load_image(r'sprites\cats\murzik\cat_2.png'),
              load_image(r'sprites\cats\murzik\cat.png'), load_image(r'sprites\cats\murzik\cat_3.png')],
     'cat2': [load_image(r'sprites\cats\treha\cat_treha.png'), load_image(r'sprites\cats\treha\cat_treha_2.png'),
@@ -791,7 +794,8 @@ def init_frames(map):
                 enemies.append((x, y))
             elif world[row][col] == 4:
                 hero_l.append((x, y))
-            elif world[row][col] == 5 or world[row][col] == 6 or world[row][col] == 8:
+            elif world[row][col] == 5 or world[row][col] == 6 or world[row][col] == 8 \
+                    or world[row][col] == 'd' or world[row][col] == 'q' or world[row][col] == 'a':
                 ground.append((x, y, world[row][col]))
             elif world[row][col] == 9:
                 cat_l.append((x, y))
@@ -806,6 +810,12 @@ def init_frames(map):
             image = DICT_IMAGES['ground_stone']
         elif elem[2] == 8:
             image = DICT_IMAGES['branch']
+        elif elem[2] == 'd':
+            image = DICT_IMAGES['tree_block']
+        elif elem[2] == 'q':
+            image = DICT_IMAGES['red_block']
+        elif elem[2] == 'a':
+            image = DICT_IMAGES['white_block']
 
         cube = Cube(width=50, height=50, x=elem[0], y=elem[1],
                     image=image)
@@ -822,7 +832,7 @@ def init_frames(map):
     if len(cat_l) == 0:
         if not user.caught_cat is None:
             for x, i in enumerate(user.caught_cat, 0):
-                sprites.add(Cat(400 + (140 * x), 240, frames=DICT_IMAGES['cat' + i], number=i))
+                sprites.add(Cat(410 + (150 * x), 240, frames=DICT_IMAGES['cat' + i], number=i))
     else:
         for elem in cat_l:
             n = str(random.randint(1, 2))

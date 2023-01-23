@@ -30,7 +30,7 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_q:
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_UP:
             world.clear()
             init_map()
 
@@ -68,29 +68,34 @@ while running:
 
     keys = pygame.key.get_pressed()
 
-    if keys[pygame.K_b]:
+    if keys[pygame.K_b]: # подвижный камень
         number = 2
-    elif keys[pygame.K_v]:
+    elif keys[pygame.K_v]: # коробка
         number = 1
-    elif keys[pygame.K_e]:
+    elif keys[pygame.K_e]: # враг
         number = 3
-    elif keys[pygame.K_p]:
+    elif keys[pygame.K_p]: # игрок
         number = 4
     elif keys[pygame.K_g]:
         number = 5
-    elif keys[pygame.K_t]:
+    elif keys[pygame.K_t]: # каменный блок
         number = 6
-    elif keys[pygame.K_x]:
+    elif keys[pygame.K_x]: # куст
         number = 7
-    elif keys[pygame.K_z]:
+    elif keys[pygame.K_z]: # степной куст
         number = 8
-    elif keys[pygame.K_c]:
+    elif keys[pygame.K_c]: # кот
         number = 9
     elif keys[pygame.K_l]:
         number = 'l'
-    elif keys[pygame.K_w]:
+    elif keys[pygame.K_w]: # лампа блок
         number = 'w'
-
+    elif keys[pygame.K_d]: # деревянный блок
+        number = 'd'
+    elif keys[pygame.K_q]: # красная шерсть
+        number = 'q'
+    elif keys[pygame.K_a]: # белая шерсть
+        number = 'a'
     mousePX, mousePY = pygame.mouse.get_pos()
     b1, b2, b3 = pygame.mouse.get_pressed()
 
@@ -126,6 +131,12 @@ while running:
                 pygame.draw.rect(screen, pygame.Color('purple'), (x, y, cell_size * 7, cell_size * 7))
             elif world[row][col] == 'w':
                 pygame.draw.rect(screen, pygame.Color(255, 250, 205), (x, y, cell_size * 5, cell_size * 5))
+            elif world[row][col] == 'd':
+                pygame.draw.rect(screen, pygame.Color('#4b280a'), (x, y, cell_size * 5, cell_size * 5))
+            elif world[row][col] == 'q':
+                pygame.draw.rect(screen, pygame.Color('#d12512'), (x, y, cell_size * 5, cell_size * 5))
+            elif world[row][col] == 'a':
+                pygame.draw.rect(screen, pygame.Color('#f2f3f4'), (x, y, cell_size * 5, cell_size * 5))
             else:
                 pygame.draw.rect(screen, pygame.Color('gray'), (x, y, cell_size, cell_size), 1)
 
