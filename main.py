@@ -75,6 +75,8 @@ DICT_IMAGES = {
     'tree_block': load_image(r'textures\tree-block.png'),
     'red_block': load_image(r'textures\red-block.png'),
     'white_block': load_image(r'textures\white-block.png'),
+    'wood-block': load_image(r'textures\wood-block.png'),
+    'fire': load_image(r'textures\Fire.png'),
     'cat1': [load_image(r'sprites\cats\murzik\cat.png'), load_image(r'sprites\cats\murzik\cat_2.png'),
              load_image(r'sprites\cats\murzik\cat.png'), load_image(r'sprites\cats\murzik\cat_3.png')],
     'cat2': [load_image(r'sprites\cats\treha\cat_treha.png'), load_image(r'sprites\cats\treha\cat_treha_2.png'),
@@ -787,7 +789,7 @@ def init_frames(map):
         for col in range(len(world[row])):
             x, y = col * 10, row * 10
 
-            if world[row][col] == 1 or world[row][col] == 7:
+            if world[row][col] == 1 or world[row][col] == 7 or world[row][col] == 'h' or world[row][col] == 'j':
                 boxes.append((x, y, world[row][col]))
             elif world[row][col] == 2:
                 cube_r.append((x, y))
@@ -823,7 +825,8 @@ def init_frames(map):
         sprites.add(cube)
 
     for elem in luke_l:
-        luke = Cube(width=80, height=80, x=elem[0], y=elem[1], image=DICT_IMAGES['luke'])
+        luke = Cube(width=80, height=80, x=elem[0],
+                    y=elem[1], image=DICT_IMAGES['luke'] if map != 'home.txt' else DICT_IMAGES['luke_h'])
         sprites.add(luke)
 
     for elem in lamp_l:
@@ -851,8 +854,15 @@ def init_frames(map):
         enemy_sprites.add(enemy)
 
     for elem in boxes:
+        image = DICT_IMAGES['box']
+        if elem[2] == 7:
+            image = DICT_IMAGES['bush']
+        elif elem[2] == 'h':
+            image = DICT_IMAGES['wood-block']
+        elif elem[2] == 'j':
+            image = DICT_IMAGES['fire']
         cube = Cube(width=50, height=50, x=elem[0], y=elem[1],
-                    image=DICT_IMAGES['box'] if elem[2] == 1 else DICT_IMAGES['bush'])
+                    image=image)
         sprites.add(cube)
         sprites_.add(cube)
         unmoving_sprites.add(cube)
@@ -956,15 +966,24 @@ def pause(value=False):
 # function to print <<user>> info
 def print_info(home):
     font = pygame.font.SysFont('monserat', 25)
-    text = font.render("Hero health:", True, pygame.Color(127, 255, 0))
+    text = font.render("hero health:", True, pygame.Color(127, 255, 0))
     text_x = WIDTH // 2 - text.get_width() // 2 - 55
     text_y = HEIGHT - text.get_height()
-    text_w = text.get_width()
-    text_h = text.get_height()
+    pygame.draw.rect(SCREEN, pygame.Color(0, 0, 0),
+                     (0, HEIGHT - 18, WIDTH, 25))
     pygame.draw.rect(SCREEN, pygame.Color(127, 255, 0),
                      (WIDTH // 2, HEIGHT - text.get_height() + 4, abs(hero.health), 10))
     if not home:
         print_text(F'Ammo: {hero.gun.ammo_now}', color=(243, 165, 5), x=0, y=HEIGHT - text.get_height(), font=25)
+        # self.catch_cat = False
+        # self.on_the_luke = False
+        if hero.on_the_luke and hero.catch_cat:
+            text_ = font.render("RUN AWAY | PRESS <<ENTER>>", True, pygame.Color(255, 255, 255))
+        elif hero.catch_cat:
+            text_ = font.render("FIND THE LUKE", True, pygame.Color(255, 255, 255))
+        else:
+            text_ = font.render("FIND AND SAVE THE CAT", True, pygame.Color(255, 255, 255))
+        SCREEN.blit(text_, (WIDTH - text_.get_width(), HEIGHT - text_.get_height()))
     if hero.gun.wait != 0:
         print_text(F'reloading: {hero.gun.wait}%', color=(243, 165, 5), x=100, y=HEIGHT - text.get_height(), font=25)
     pygame.draw.rect(SCREEN, pygame.Color(127, 255, 0),

@@ -76,7 +76,7 @@ while running:
         number = 3
     elif keys[pygame.K_p]: # игрок
         number = 4
-    elif keys[pygame.K_g]:
+    elif keys[pygame.K_g]: # песок
         number = 5
     elif keys[pygame.K_t]: # каменный блок
         number = 6
@@ -96,6 +96,10 @@ while running:
         number = 'q'
     elif keys[pygame.K_a]: # белая шерсть
         number = 'a'
+    elif keys[pygame.K_h]: # деревянный обработанный блок
+        number = 'h'
+    elif keys[pygame.K_j]: # костер
+        number = 'j'
     mousePX, mousePY = pygame.mouse.get_pos()
     b1, b2, b3 = pygame.mouse.get_pressed()
 
@@ -137,6 +141,10 @@ while running:
                 pygame.draw.rect(screen, pygame.Color('#d12512'), (x, y, cell_size * 5, cell_size * 5))
             elif world[row][col] == 'a':
                 pygame.draw.rect(screen, pygame.Color('#f2f3f4'), (x, y, cell_size * 5, cell_size * 5))
+            elif world[row][col] == 'h':
+                pygame.draw.rect(screen, pygame.Color((117,92,72)), (x, y, cell_size * 5, cell_size * 5))
+            elif world[row][col] == 'j':
+                pygame.draw.rect(screen, pygame.Color('pink'), (x, y, cell_size * 5, cell_size * 5))
             else:
                 pygame.draw.rect(screen, pygame.Color('gray'), (x, y, cell_size, cell_size), 1)
 
