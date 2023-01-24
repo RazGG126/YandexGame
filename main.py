@@ -1075,7 +1075,7 @@ def main_action():
             if hero.catch_cat and hero.on_the_luke:
                 # add coins to user
                 coins = user.level * 2 + 24
-                coins += kills
+                coins += kills * 5
                 if restarts == 0:
                     coins += 10
                 elif 1 <= restarts <= 2:
