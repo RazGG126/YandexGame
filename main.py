@@ -4,7 +4,7 @@ import pygame
 import json
 import random
 import math
-from User import User, levels
+from User import User, LEVELS
 from pygame.sprite import AbstractGroup
 
 # initialization of important variables
@@ -628,11 +628,11 @@ class Enemy(pygame.sprite.Sprite):
 
 # <<groundtexture>> class. Bacground texture in the game
 class GroundTexture(pygame.sprite.Sprite):
-    def __init__(self, tile_type, pos_x, pos_y):
+    def __init__(self, tile_type, pos_x, pos_y, d):
         super().__init__(ground_sprites, all_sprites)
         self.image = DICT_IMAGES[tile_type]
-        self.width = 86
-        self.height = 86
+        self.width = d
+        self.height = d
         self.rect = self.image.get_rect().move(
             self.width * pos_x, self.height * pos_y)
 
@@ -759,9 +759,15 @@ class Camera:
 def init_frames(map):
     global moving_cube, hero, cat, luke, lamp
 
-    for y in range((2000 // 86) + 1):
-        for x in range((2000 // 86) + 1):
-            GroundTexture('ground_ender', x, y)
+    if map == 'game_map_4.txt':
+        d = 50
+        image = 'ground_sand'
+    else:
+        d = 86
+        image = 'ground_ender'
+    for y in range((2000 // d) + 1):
+        for x in range((2000 // d) + 1):
+            GroundTexture(image, x, y, d)
 
     world = []
     file = open(fr'data\levels\{map}', 'r')
@@ -996,7 +1002,7 @@ def main_action():
     global congratulations, restarts, cat_number
     running = True
 
-    init_frames(levels[user.level - 1])
+    init_frames(LEVELS[user.level - 1])
 
     Border(-50, 0, 2100, 0, 't')
     Border(-50, 2000, 2100, 2000, 'b')
@@ -1075,7 +1081,7 @@ def main_action():
             if hero.catch_cat and hero.on_the_luke:
                 # add coins to user
                 coins = user.level * 2 + 24
-                coins += kills * 5
+                coins += kills * 2
                 if restarts == 0:
                     coins += 10
                 elif 1 <= restarts <= 2:
@@ -1083,7 +1089,7 @@ def main_action():
                 user.coins += coins
                 # new level logic
                 user.new_level()
-                if user.level == 4:
+                if user.level == len(LEVELS) + 1:
                     user.level = 1
                     user.game_replays += 1
                     congratulations = True

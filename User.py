@@ -1,4 +1,4 @@
-levels = ['game_map.txt', 'game_map_2.txt', 'game_map_3.txt']
+LEVELS = ['game_map.txt', 'game_map_2.txt', 'game_map_3.txt', 'game_map_4.txt']
 
 
 class User:
