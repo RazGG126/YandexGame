@@ -35,7 +35,7 @@ restarts = 0
 cat_number = None
 congratulations = False
 
-
+w
 # function of loading images
 def load_image(name, colorkey=None):
     fullname = os.path.join('data', name)
