@@ -70,7 +70,7 @@ DICT_IMAGES = {
     'menu_bg': load_image(r'textures\bg-menu.png'),
     'keys_wasd': load_image(r'textures\keys_wasd.png'),
     'keys_arrows': load_image(r'textures\keys_arrows.png'),
-    'ground_ender': load_image(r'ground\ender_block.png'),
+    'ground_ender': load_image(r'textures\ender_block.png'),
     'stone_block': load_image(r'textures\stone_block.png'),
     'tree_block': load_image(r'textures\tree-block.png'),
     'red_block': load_image(r'textures\red-block.png'),
