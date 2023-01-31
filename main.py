@@ -1,117 +1,11 @@
-import os
 import sys
 import pygame
 import json
 import random
 import math
-from User import User, LEVELS
+from User import LEVELS
 from pygame.sprite import AbstractGroup
-
-# initialization of important variables
-pygame.mixer.pre_init(44100, -16, 1, 512)
-pygame.init()
-WIDTH = 1000
-HEIGHT = 500
-SIZE = WIDTH, HEIGHT
-SCREEN = pygame.display.set_mode(SIZE)
-SCREEN.fill(pygame.Color('black'))
-CLOCK = pygame.time.Clock()
-FPS = 30
-ground_sprites = pygame.sprite.Group()
-enemy_sprites = pygame.sprite.Group()
-all_sprites = pygame.sprite.Group()
-vertical_borders = pygame.sprite.Group()
-horizontal_borders = pygame.sprite.Group()
-sprites = pygame.sprite.Group()
-sprites_ = pygame.sprite.Group()
-unmoving_sprites = pygame.sprite.Group()
-mousePos = {'x': 0, 'y': 0}
-user = None
-hero = None
-cat = None
-luke = None
-lamp = False
-restarts = 0
-cat_number = None
-congratulations = False
-
-
-# function of loading images
-def load_image(name, colorkey=None):
-    fullname = os.path.join('data', name)
-    if not os.path.isfile(fullname):
-        print(f"Файл с изображением '{fullname}' не найден")
-        sys.exit()
-    image = pygame.image.load(fullname)
-    if colorkey is not None:
-        image = image.convert()
-        if colorkey == -1:
-            colorkey = image.get_at((0, 0))
-        image.set_colorkey(colorkey)
-    else:
-        image = image.convert_alpha()
-    return image
-
-
-# dictionary with frames
-DICT_IMAGES = {
-    'hero_frames_default': [load_image(rf'sprites\default\{i}.png') for i in range(1, 7)],
-    'hero_frames_colorit': [load_image(rf'sprites\colorit\{i}.png') for i in range(1, 7)],
-    'hero_frames_extra_pink': [load_image(rf'sprites\extra_pink\{i}.png') for i in range(1, 7)],
-    'hero_frames_radiation': [load_image(rf'sprites\radiation\{i}.png') for i in range(1, 7)],
-    'enemy_frames': [load_image(rf'sprites\enemy_skin\enemy.{i}.png') for i in range(1, 7)],
-    'hero_frames_default_bag': [load_image(rf'sprites\default\{i}.{i}.png') for i in range(1, 7)],
-    'hero_frames_colorit_bag': [load_image(rf'sprites\colorit\{i}.{i}.png') for i in range(1, 7)],
-    'hero_frames_extra_pink_bag': [load_image(rf'sprites\extra_pink\{i}.{i}.png') for i in range(1, 7)],
-    'hero_frames_radiation_bag': [load_image(rf'sprites\radiation\{i}.{i}.png') for i in range(1, 7)],
-    'death_frames': [load_image(rf'death\{i}.png') for i in range(1, 8)],
-    'ak47': load_image(r'weapon\ak47.png'),
-    'm4a1': load_image(r'weapon\m4a1.png'),
-    'menu_bg': load_image(r'textures\bg-menu.png'),
-    'keys_wasd': load_image(r'textures\keys_wasd.png'),
-    'keys_arrows': load_image(r'textures\keys_arrows.png'),
-    'ground_ender': load_image(r'textures\ender_block.png'),
-    'stone_block': load_image(r'textures\stone_block.png'),
-    'tree_block': load_image(r'textures\tree-block.png'),
-    'red_block': load_image(r'textures\red-block.png'),
-    'white_block': load_image(r'textures\white-block.png'),
-    'wood-block': load_image(r'textures\wood-block.png'),
-    'fire': load_image(r'textures\Fire.png'),
-    'cat1': [load_image(r'sprites\cats\murzik\cat.png'), load_image(r'sprites\cats\murzik\cat_2.png'),
-             load_image(r'sprites\cats\murzik\cat.png'), load_image(r'sprites\cats\murzik\cat_3.png')],
-    'cat2': [load_image(r'sprites\cats\treha\cat_treha.png'), load_image(r'sprites\cats\treha\cat_treha_2.png'),
-             load_image(r'sprites\cats\treha\cat_treha_4.png'), load_image(r'sprites\cats\treha\cat_treha_3.png')],
-    'box': load_image(r'textures\box.jpg'),
-    'ground_sand': load_image(r'textures\ground_sand.png'),
-    'ground_stone': load_image(r'textures\ground_stone.jpg'),
-    'bush': load_image(r'textures\bush_mine.png'),
-    'branch': load_image(r'textures\branch.png'),
-    'luke_h': load_image(r'textures\trapdoor_h.png'),
-    'luke': load_image(r'textures\trapdoor.png'),
-    'lamp': load_image(r'textures\glowstone.png'),
-}
-
-
-# function of loading <<user>> statistics
-def load_json():
-    global user
-    data = json.load(open(r'data\User\user.json', 'r', encoding='utf-8'))
-    user = User(level=data['level'], coins=data['coins'],
-                skin=data['skin'], skins_have=data['skins_have'], gun=data['gun'], gun_have=data['gun_have'],
-                kills=data['kills'], restarts=data['restarts'], game_replays=data['game_replays'],
-                ammo_spend=data['ammo_spend'], caught_cat=data['caught_cat'],
-                menu_music_volume=data['menu_music_volume'], control=data['control'])
-
-
-load_json()
-
-
-# function of saving <<user>> statistics
-def dump_json():
-    global user
-    data = user.create_dict()
-
-    json.dump(data, open(r'data\User\user.json', 'w', encoding='utf-8'))
+from constant import *
 
 
 # <<gun>> class
@@ -302,7 +196,7 @@ class Hero(pygame.sprite.Sprite):
             self.move_gun()
         self.rect.x += self.move_x
         self.rect.y += self.move_y
-
+        #if collide hero don't move
         if (not pygame.sprite.spritecollideany(self, horizontal_borders)) and (
                 not pygame.sprite.spritecollideany(self, vertical_borders)):
             self.rect.x -= self.move_x
@@ -317,6 +211,7 @@ class Hero(pygame.sprite.Sprite):
             self.rect.y -= self.move_y
             if not pygame.sprite.collide_rect(cube, cube_2):
                 self.rect.x += self.move_x
+                # if collide hero with moving cube (x) -> moving cube moves x
                 if pygame.sprite.collide_rect(cube, cube_2):
                     self.heavy = 1 if self.move_x >= 0 else -1
                     self.rect.x -= self.move_x
@@ -326,6 +221,7 @@ class Hero(pygame.sprite.Sprite):
                         cube_2.move(-self.heavy, 0)
                         self.rect.x -= self.heavy
                 self.rect.y += self.move_y
+                # if collide hero with moving cube (y) -> moving cube moves y
                 if pygame.sprite.collide_rect(cube, cube_2):
                     self.heavy = 1 if self.move_y >= 0 else -1
                     self.rect.y -= self.move_y
@@ -344,6 +240,7 @@ class Hero(pygame.sprite.Sprite):
             self.update_frame()
         else:
             self.update_frame(True)
+        #logic of cat's catch
         if not self.home:
             if pygame.sprite.collide_mask(self, cat):
                 if not self.catch_cat:
@@ -395,7 +292,7 @@ class Enemy(pygame.sprite.Sprite):
 
         self.gun_image = gun.image
 
-        self.count = 0
+        self.count = 0  # if 15 enemy shoots
         self.fires_list = []
 
         self.dead = False
@@ -661,10 +558,6 @@ class Cube(pygame.sprite.Sprite):
     def move(self, move_x, move_y):
         self.rect.x += move_x
         self.rect.y += move_y
-
-
-# <<moving_cube>> - it's the cube with texture of a big stone which you can move.
-moving_cube = None
 
 
 # <<border>> class. (game map border)
@@ -1530,18 +1423,6 @@ def start_game():
         reset()
 
 
-from_game = False
-
-pygame.mixer.music.load('data/sounds/bg-tack.ogg')
-pygame.mixer.music.play(-1)
-pygame.mixer.music.set_volume(user.menu_music_volume)
-
-shoot = pygame.mixer.Sound('data/sounds/shoot.ogg')
-shoot.set_volume(0.5)
-walk = pygame.mixer.Sound('data/sounds/walk.ogg')
-meow = pygame.mixer.Sound('data/sounds/meow.ogg')
-reloading = pygame.mixer.Sound('data/sounds/reloading.ogg')
-reloading.set_volume(0.3)
-
+start_music()
 show_menu()
 terminate()
